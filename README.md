@@ -1,7 +1,7 @@
 Traceratops
 ===========
 
-A silly name for a ray tracer of course!
+A silly name for a path tracer, of course!
 
 More to come.
 
