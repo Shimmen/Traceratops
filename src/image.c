@@ -18,6 +18,14 @@ image image_make(int Width, int Height)
     return Image;
 }
 
+void image_release(image *Image)
+{
+    if (Image && Image->Pixels)
+    {
+        free(Image->Pixels);
+    }
+}
+
 void image_set_pixel(image *Image, int x, int y, uint32_t Pixel)
 {
     assert(x >= 0 && x < Image->Width);

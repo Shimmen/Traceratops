@@ -5,5 +5,8 @@
 #include "scene.h"
 
 void render_scene(scene *Scene, image *Image, int RaysPerPixel);
+vec3 trace_ray(ray *Ray, scene *Scene);
+
+uint32_t pixel_from_color(vec3 color);
 
 #endif // TRACERATOPS_RENDERING_H
