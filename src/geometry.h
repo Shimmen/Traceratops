@@ -1,28 +1,32 @@
 #ifndef TRACERATOPS_GEOMETRY_H
 #define TRACERATOPS_GEOMETRY_H
 
-#include "traceratops_math.h"
+#include "tracemath.h"
 
-typedef struct ray
+struct ray
 {
-    vec3 Origin;
-    vec3 Direction;
-} ray;
+    tracemath::vec3 Origin;
+    tracemath::vec3 Direction;
+};
 
-typedef struct sphere
+struct sphere
 {
-    vec3 P;
+    tracemath::vec3 P;
     float r;
-} sphere;
+
+    sphere(tracemath::vec3 P, float r) : P(P), r(r) {}
+};
 
 int sphere_intersect(sphere *Sphere, ray *Ray, float *t);
-vec3 sphere_normal(sphere *Sphere, vec3 Point);
+tracemath::vec3 sphere_normal(sphere *Sphere, tracemath::vec3 Point);
 
-typedef struct plane
+struct plane
 {
-    vec3 P;
-    vec3 N;
-} plane;
+    tracemath::vec3 P;
+    tracemath::vec3 N;
+
+    plane(tracemath::vec3 P, tracemath::vec3 N) : P(P), N(N) {}
+};
 
 int plane_intersect(plane *Plane, ray *Ray, float *t);
 

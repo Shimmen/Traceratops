@@ -1,19 +1,29 @@
 #ifndef TRACERATOPS_IMAGE_H
 #define TRACERATOPS_IMAGE_H
 
-#include <stdint.h>
+#include <cstdint>
+#include <string>
 
-typedef struct image
+class image
 {
-    int Width;
-    int Height;
+public:
+
+    const int Width;
+    const int Height;
+
+    image(int Width, int Height);
+    ~image();
+
+    image(image& Other) = delete;
+    image operator=(const image& Other) = delete;
+
+    void set_pixel(int x, int y, uint32_t Pixel);
+    void write_to_png(const std::string& FileName);
+
+private:
+
     uint32_t *Pixels;
-} image;
 
-image image_make(int Width, int Height);
-void image_release(image *Image);
-
-void image_set_pixel(image *Image, int x, int y, uint32_t Pixel);
-void image_write_png(image *Image, const char *FileName);
+};
 
 #endif // TRACERATOPS_IMAGE_H

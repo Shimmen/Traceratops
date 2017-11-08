@@ -1,22 +1,24 @@
 #ifndef TRACERATOPS_SCENE_H
 #define TRACERATOPS_SCENE_H
 
+#include <vector>
+
 #include "geometry.h"
 
-typedef struct scene
+class scene
 {
-    int NumPlanes;
-    plane *Planes;
+public:
 
-    int NumSpheres;
-    sphere *Spheres;
+    //
+    // TODO: Implement a proper scene acceleation structure!
+    //
+
+    std::vector<plane> Planes;
+    std::vector<sphere> Spheres;
 
     // TODO: Remove for proper lights later
-    vec3 LightDirection;
+    tracemath::vec3 LightDirection;
 
-} scene;
-
-scene scene_make(int NumSpheres, int NumPlanes);
-void scene_release(scene *Scene);
+};
 
 #endif // TRACERATOPS_SCENE_H

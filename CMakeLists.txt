@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.8)
-project(Traceratops C)
+project(Traceratops CXX)
 
-set(CMAKE_C_STANDARD 11)
+set(CMAKE_CXX_STANDARD 11)
 
 file(GLOB SOURCE_FILES src/*)
 add_executable(Traceratops ${SOURCE_FILES})

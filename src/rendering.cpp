@@ -1,6 +1,6 @@
 #include "rendering.h"
 
-#include <stdlib.h>
+using namespace tracemath;
 
 void make_test_image(image *Image)
 {
@@ -13,14 +13,14 @@ void make_test_image(image *Image)
             uint32_t r = (x % 0xFF) << 0;
 
             uint32_t PixelValue = r | g | b | a;
-            image_set_pixel(Image, x, y, PixelValue);
+            Image->set_pixel(x, y, PixelValue);
         }
     }
 
-    image_set_pixel(Image, 0, 0, 0xFFFFFFFF);
-    image_set_pixel(Image, 0, Image->Height - 1, 0xFFFFFFFF);
-    image_set_pixel(Image, Image->Width - 1, 0, 0xFFFFFFFF);
-    image_set_pixel(Image, Image->Width - 1, Image->Height - 1, 0xFFFFFFFF);
+    Image->set_pixel(0, 0, 0xFFFFFFFF);
+    Image->set_pixel(0, Image->Height - 1, 0xFFFFFFFF);
+    Image->set_pixel(Image->Width - 1, 0, 0xFFFFFFFF);
+    Image->set_pixel(Image->Width - 1, Image->Height - 1, 0xFFFFFFFF);
 }
 
 float random_float_01()
@@ -29,14 +29,14 @@ float random_float_01()
     return (float)rand() / (float)RAND_MAX;
 }
 
-vec3 get_primary_ray(image* Image, int PixelX, int PixelY)
+tracemath::vec3 get_jittered_primary_ray(image *Image, int PixelX, int PixelY)
 {
-    vec3 Dir = {};
+    tracemath::vec3 Dir = {};
 
-    float x = (float)PixelX;
-    float y = (float)PixelY;
-    float w = (float)Image->Width;
-    float h = (float)Image->Height;
+    auto x = (float)PixelX;
+    auto y = (float)PixelY;
+    auto w = (float)Image->Width;
+    auto h = (float)Image->Height;
 
     // Should be [0, 1] for an offset inside the pixel
 #if 0
@@ -55,7 +55,7 @@ vec3 get_primary_ray(image* Image, int PixelX, int PixelY)
     float AspectRatio = w / h;
     Dir.x *= AspectRatio;
 
-    vec3_normalize(&Dir, Dir);
+    normalize(&Dir);
     return Dir;
 }
 
@@ -64,34 +64,26 @@ void render_scene(scene *Scene, image *Image, int RaysPerPixel)
     //make_test_image(Image);
 
     ray Ray = {};
-    Ray.Origin = vec3_make(0, 0, 0);
+    Ray.Origin = vec3(0, 0, 0);
 
     for (uint32_t y = 0; y < Image->Height; ++y)
     {
         for (uint32_t x = 0; x < Image->Width; ++x)
         {
-            vec3 AccumulatedColor = vec3_make(0, 0, 0);
+            vec3 AccumulatedColor = vec3{};
             for (int i = 0; i < RaysPerPixel; ++i)
             {
-                Ray.Direction = get_primary_ray(Image, x, y);
+                Ray.Direction = get_jittered_primary_ray(Image, x, y);
                 vec3 Color = trace_ray(&Ray, Scene);
-                vec3_add(&AccumulatedColor, AccumulatedColor, Color);
+                AccumulatedColor = AccumulatedColor + Color;
             }
-            vec3_scale(&AccumulatedColor, AccumulatedColor, 1.0f / RaysPerPixel);
+            AccumulatedColor = AccumulatedColor * (1.0f / RaysPerPixel);
 
             uint32_t Pixel = pixel_from_color(AccumulatedColor);
-            image_set_pixel(Image, x, Image->Height - y - 1, Pixel);
+            Image->set_pixel(x, Image->Height - y - 1, Pixel);
         }
     }
 
-}
-
-vec3 calculate_hit_point(ray *Ray, float Distance)
-{
-    vec3 HitPoint = {};
-    vec3_scale(&HitPoint, Ray->Direction, Distance);
-    vec3_add(&HitPoint, HitPoint, Ray->Origin);
-    return HitPoint;
 }
 
 vec3 trace_ray(ray *Ray, scene *Scene)
@@ -103,33 +95,31 @@ vec3 trace_ray(ray *Ray, scene *Scene)
     vec3 HitNormal = {};
     vec3 Color = {};
 
-    for (int i = 0; i < Scene->NumPlanes; ++i)
+    for (auto& Plane : Scene->Planes)
     {
-        plane *Plane = Scene->Planes + i;
-        if (plane_intersect(Plane, Ray, &Distance))
+        if (plane_intersect(&Plane, Ray, &Distance))
         {
             if (Distance > 0 && Distance < MinDistance)
             {
                 MinDistance = Distance;
 
-                Color = vec3_make(0, 1, 0);
-                HitNormal = Plane->N;
+                Color = vec3{0, 1, 0};
+                HitNormal = Plane.N;
             }
         }
     }
 
-    for (int i = 0; i < Scene->NumSpheres; ++i)
+    for (auto& Sphere : Scene->Spheres)
     {
-        sphere *Sphere = Scene->Spheres + i;
-        if (sphere_intersect(Sphere, Ray, &Distance))
+        if (sphere_intersect(&Sphere, Ray, &Distance))
         {
             if (Distance > 0 && Distance < MinDistance)
             {
                 MinDistance = Distance;
 
-                Color = vec3_make(1, 0, 0);
-                vec3 HitPoint = calculate_hit_point(Ray, Distance);
-                HitNormal = sphere_normal(Sphere, HitPoint);
+                Color = vec3{1, 0, 0};
+                vec3 HitPoint = Ray->Origin + (Ray->Direction * Distance);
+                HitNormal = sphere_normal(&Sphere, HitPoint);
             }
         }
     }
@@ -140,11 +130,9 @@ vec3 trace_ray(ray *Ray, scene *Scene)
     }
 
     // TODO: Only like this for now, obviously...
-    vec3 wo = {};
-    vec3_negate(&wo, Scene->LightDirection);
-    float Lightness = vec3_dot(HitNormal, wo);
+    float Lightness = dot(HitNormal, -Scene->LightDirection);
     Lightness = fmaxf(0.0f, Lightness);
-    vec3_scale(&Color, Color, Lightness);
+    Color = Color * Lightness;
 
     return Color;
 }
@@ -159,9 +147,9 @@ uint32_t pixel_from_color(vec3 color)
 #endif
     static const float gamma_pow = 1.0f / gamma;
 
-    uint32_t r = 0xFF & (uint32_t)(powf(color.x, gamma_pow) * 255.0f + 0.5f);
-    uint32_t g = 0xFF & (uint32_t)(powf(color.y, gamma_pow) * 255.0f + 0.5f);
-    uint32_t b = 0xFF & (uint32_t)(powf(color.z, gamma_pow) * 255.0f + 0.5f);
+    uint32_t r = 0xFF & (uint32_t)(lroundf(powf(color.x, gamma_pow) * 255.0f));
+    uint32_t g = 0xFF & (uint32_t)(lroundf(powf(color.y, gamma_pow) * 255.0f));
+    uint32_t b = 0xFF & (uint32_t)(lroundf(powf(color.z, gamma_pow) * 255.0f));
 
     return (a << 24) | (b << 16) | (g << 8) | (r << 0);
 }
