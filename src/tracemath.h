@@ -3,9 +3,13 @@
 
 #include <cmath>
 #include <cassert>
+#include <random>
 
 namespace tracemath
 {
+    ///////////////////////////////////////////////////////////////
+    // vec3
+
     struct vec3
     {
         float x;
@@ -31,6 +35,18 @@ namespace tracemath
     vec3 operator-(const vec3& a, const vec3& b)
     {
         return vec3{a.x - b.x, a.y - b.y, a.z - b.z};
+    }
+
+    static inline
+    vec3 operator*(const vec3& a, const vec3& b)
+    {
+        return vec3{a.x * b.x, a.y * b.y, a.z * b.z};
+    }
+
+    static inline
+    vec3 operator/(const vec3& a, const vec3& b)
+    {
+        return vec3{a.x / b.x, a.y / b.y, a.z / b.z};
     }
 
     static inline
@@ -98,6 +114,39 @@ namespace tracemath
         return vec;
     }
 
+    static inline
+    vec3 lerp(const vec3& a, const vec3& b, float x)
+    {
+        return a + (b - a) * x;
+    }
+
+    ///////////////////////////////////////////////////////////////
+    // random
+
+    class rng
+    {
+    public:
+
+        inline float random_01()
+        {
+            return uniform_01_dist(engine);
+        }
+
+        inline float random_neg11()
+        {
+            return uniform_neg11_dist(engine);
+        }
+
+    private:
+
+        std::default_random_engine engine;
+        std::uniform_real_distribution<float> uniform_01_dist{0.0f, 1.0f};
+        std::uniform_real_distribution<float> uniform_neg11_dist{-1.0f, 1.0f};
+
+    };
+
+
+    ///////////////////////////////////////////////////////////////
 }
 
 #endif // TRACERATOPS_MATH_H

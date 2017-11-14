@@ -1,7 +1,10 @@
+#include <random>
+
 #include "rendering.h"
 
 using namespace tracemath;
 
+#if 0
 void make_test_image(image *Image)
 {
     for (uint32_t y = 0; y < Image->Height; ++y) {
@@ -22,15 +25,12 @@ void make_test_image(image *Image)
     Image->set_pixel(Image->Width - 1, 0, 0xFFFFFFFF);
     Image->set_pixel(Image->Width - 1, Image->Height - 1, 0xFFFFFFFF);
 }
+#endif
 
-float random_float_01()
+tracemath::vec3 get_jittered_primary_ray(image *Image, int PixelX, int PixelY, rng& Rng)
 {
-    // TODO: Better randomness! Possibly also "thread safe"/RNG-per-thread?
-    return (float)rand() / (float)RAND_MAX;
-}
 
-tracemath::vec3 get_jittered_primary_ray(image *Image, int PixelX, int PixelY)
-{
+
     tracemath::vec3 Dir = {};
 
     auto x = (float)PixelX;
@@ -43,8 +43,8 @@ tracemath::vec3 get_jittered_primary_ray(image *Image, int PixelX, int PixelY)
     float OffsetX = 0.5f;
     float OffsetY = 0.5f;
 #else
-    float OffsetX = random_float_01();
-    float OffsetY = random_float_01();
+    float OffsetX = Rng.random_01();
+    float OffsetY = Rng.random_01();
 #endif
 
     Dir.x = (x + OffsetX) / w * 2.0f - 1.0f;
@@ -59,82 +59,146 @@ tracemath::vec3 get_jittered_primary_ray(image *Image, int PixelX, int PixelY)
     return Dir;
 }
 
-void render_scene(scene *Scene, image *Image, int RaysPerPixel)
+vec3 tone_map_hdr_to_ldr(const vec3& Hdr)
 {
-    //make_test_image(Image);
+    return Hdr / (Hdr + vec3(1, 1, 1));
+}
+
+void render_scene(scene *Scene, image *Image, int RaysPerPixel, int MaxRayDepth)
+{
+    static rng Rng{};
 
     ray Ray = {};
-    Ray.Origin = vec3(0, 0, 0);
 
     for (uint32_t y = 0; y < Image->Height; ++y)
     {
         for (uint32_t x = 0; x < Image->Width; ++x)
         {
-            vec3 AccumulatedColor = vec3{};
+            if (y % 10 == 0 && x == 0)
+            {
+                printf("... %d%% done ...\r", (int)roundf(static_cast<float>(y) / Image->Height * 100.0f));
+                fflush(stdout);
+            }
+
+            vec3 AccumulatedHdrColor = vec3{};
             for (int i = 0; i < RaysPerPixel; ++i)
             {
-                Ray.Direction = get_jittered_primary_ray(Image, x, y);
-                vec3 Color = trace_ray(&Ray, Scene);
-                AccumulatedColor = AccumulatedColor + Color;
+                Ray.Origin = vec3(0, 0, 0);
+                Ray.Direction = get_jittered_primary_ray(Image, x, y, Rng);
+                vec3 Color = trace_ray(&Ray, Scene, Rng, MaxRayDepth);
+                AccumulatedHdrColor = AccumulatedHdrColor + Color;
             }
-            AccumulatedColor = AccumulatedColor * (1.0f / RaysPerPixel);
 
-            uint32_t Pixel = pixel_from_color(AccumulatedColor);
+            AccumulatedHdrColor = AccumulatedHdrColor * (1.0f / RaysPerPixel);
+            vec3 LdrColor = tone_map_hdr_to_ldr(AccumulatedHdrColor);
+
+            uint32_t Pixel = pixel_from_color(LdrColor);
             Image->set_pixel(x, Image->Height - y - 1, Pixel);
         }
     }
 
+    printf("... 100%% done ...\n");
 }
 
-vec3 trace_ray(ray *Ray, scene *Scene)
+vec3 random_hemisphere(vec3 N, rng& Rng)
+{
+    normalize(&N);
+
+    vec3 RandomOffset = vec3{ Rng.random_neg11(), Rng.random_neg11(), Rng.random_neg11() };
+    return normalize(N + RandomOffset);
+}
+
+vec3 reflect(const vec3& I, const vec3& N)
+{
+    // See http://docs.gl/sl4/reflects
+    return I - N * 2.0f * dot(N, I);
+}
+
+static float NormalOffsetAmount = 0.001f;
+
+vec3 trace_ray(ray *Ray, scene *Scene, rng& Rng, int Depth)
 {
     float Distance;
-    float MinDistance = MAXFLOAT;
+    float MinDistance;
 
-    // TODO: Implement material system!
+    int  HitMaterial = -1; // (default material)
+    vec3 HitPoint = {};
     vec3 HitNormal = {};
-    vec3 Color = {};
 
-    for (auto& Plane : Scene->Planes)
+    vec3 BounceAttenuation = vec3{1, 1, 1};
+    vec3 ResultColor = vec3{0, 0, 0};
+
+    for (int i = 0; i < Depth; ++i)
     {
-        if (plane_intersect(&Plane, Ray, &Distance))
-        {
-            if (Distance > 0 && Distance < MinDistance)
-            {
-                MinDistance = Distance;
+        MinDistance = MAXFLOAT;
 
-                Color = vec3{0, 1, 0};
-                HitNormal = Plane.N;
+        for (auto &Plane : Scene->Planes)
+        {
+            if (plane_intersect(&Plane, Ray, &Distance))
+            {
+                if (Distance > 0 && Distance < MinDistance)
+                {
+                    MinDistance = Distance;
+
+                    HitPoint = Ray->Origin + (Ray->Direction * Distance);
+                    HitNormal = Plane.N;
+                    HitMaterial = Plane.Material;
+                }
             }
         }
-    }
 
-    for (auto& Sphere : Scene->Spheres)
-    {
-        if (sphere_intersect(&Sphere, Ray, &Distance))
+        for (auto &Sphere : Scene->Spheres)
         {
-            if (Distance > 0 && Distance < MinDistance)
+            if (sphere_intersect(&Sphere, Ray, &Distance))
             {
-                MinDistance = Distance;
+                if (Distance > 0 && Distance < MinDistance)
+                {
+                    MinDistance = Distance;
 
-                Color = vec3{1, 0, 0};
-                vec3 HitPoint = Ray->Origin + (Ray->Direction * Distance);
-                HitNormal = sphere_normal(&Sphere, HitPoint);
+                    HitPoint = Ray->Origin + (Ray->Direction * Distance);
+                    HitNormal = normalize(HitPoint - Sphere.P);
+                    HitMaterial = Sphere.Material;
+                }
             }
         }
+
+        // No hit!
+        if (MinDistance == MAXFLOAT)
+        {
+            // TODO: Add color from environment etc.
+            break;
+        }
+
+        auto& Material = Scene->get_material(HitMaterial);
+
+        //
+        // Calculate ray for next bounce
+        //
+
+        // TODO: Use a proper light model!!!
+        vec3 PerfectReflectedDirection = reflect(Ray->Direction, HitNormal);
+        vec3 DiffuseRoughDirection = random_hemisphere(HitNormal, Rng);
+        vec3 NewRayDirection = lerp(PerfectReflectedDirection, DiffuseRoughDirection, Material.Roughness);
+        normalize(&NewRayDirection);
+
+        // Offset slightly out by the normal so we aren't inside the currently hit object to begin with
+        vec3 NewRayOrigin = HitPoint + (HitNormal * NormalOffsetAmount);
+
+        //
+        // Accumulate contribution
+        //
+
+        vec3 EmitColor = Material.Albedo * Material.Emittance;
+        ResultColor = ResultColor + (BounceAttenuation * EmitColor);
+
+        float CosineAttenuation = fmaxf(0.0f, dot(NewRayDirection, HitNormal));
+        BounceAttenuation = BounceAttenuation * Material.Albedo * CosineAttenuation;
+
+        Ray->Origin = NewRayOrigin;
+        Ray->Direction = NewRayDirection;
     }
 
-    if (MinDistance == MAXFLOAT)
-    {
-        return Color;
-    }
-
-    // TODO: Only like this for now, obviously...
-    float Lightness = dot(HitNormal, -Scene->LightDirection);
-    Lightness = fmaxf(0.0f, Lightness);
-    Color = Color * Lightness;
-
-    return Color;
+    return ResultColor;
 }
 
 uint32_t pixel_from_color(vec3 color)

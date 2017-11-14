@@ -4,21 +4,12 @@
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
-#include <string>
 
 image::image(int Width, int Height)
     : Width(Width), Height(Height)
 {
     size_t ImageSize = Width * Height * sizeof(uint32_t);
-    this->Pixels = (uint32_t *)malloc(ImageSize);
-}
-
-image::~image()
-{
-    if (Pixels)
-    {
-        free(Pixels);
-    }
+    Pixels.resize(ImageSize);
 }
 
 void
@@ -38,5 +29,5 @@ image::write_to_png(const std::string& FileName)
     int NumComponents = 4;
     int Stride = Width * sizeof(Pixels[0]);
 
-    stbi_write_png(FileName.c_str(), Width, Height, NumComponents, Pixels, Stride);
+    stbi_write_png(FileName.c_str(), Width, Height, NumComponents, Pixels.data(), Stride);
 }

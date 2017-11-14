@@ -2,6 +2,7 @@
 #define TRACERATOPS_IMAGE_H
 
 #include <cstdint>
+#include <vector>
 #include <string>
 
 class image
@@ -12,7 +13,7 @@ public:
     const int Height;
 
     image(int Width, int Height);
-    ~image();
+    ~image() = default;
 
     image(image& Other) = delete;
     image operator=(const image& Other) = delete;
@@ -22,7 +23,7 @@ public:
 
 private:
 
-    uint32_t *Pixels;
+    std::vector<uint32_t> Pixels;
 
 };
 

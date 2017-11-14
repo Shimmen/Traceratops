@@ -35,13 +35,6 @@ int sphere_intersect(sphere *Sphere, ray *Ray, float *t)
     return *t > 0;
 }
 
-vec3 sphere_normal(sphere *Sphere, vec3 Point)
-{
-    vec3 Normal = Point - Sphere->P;
-    normalize(&Normal);
-    return Normal;
-}
-
 int plane_intersect(plane *Plane, ray *Ray, float *t)
 {
     float Denominator = dot(Plane->N, Ray->Direction);

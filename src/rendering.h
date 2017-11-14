@@ -4,8 +4,8 @@
 #include "image.h"
 #include "scene.h"
 
-void render_scene(scene *Scene, image *Image, int RaysPerPixel);
-tracemath::vec3 trace_ray(ray *Ray, scene *Scene);
+void render_scene(scene *Scene, image *Image, int RaysPerPixel, int MaxRayDepth);
+tracemath::vec3 trace_ray(ray *Ray, scene *Scene, tracemath::rng& Rng, int Depth);
 
 uint32_t pixel_from_color(tracemath::vec3 color);
 

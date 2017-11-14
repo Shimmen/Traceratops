@@ -14,20 +14,23 @@ struct sphere
     tracemath::vec3 P;
     float r;
 
-    sphere(tracemath::vec3 P, float r) : P(P), r(r) {}
-};
+    int Material;
 
-int sphere_intersect(sphere *Sphere, ray *Ray, float *t);
-tracemath::vec3 sphere_normal(sphere *Sphere, tracemath::vec3 Point);
+    sphere(tracemath::vec3 P, float r, int Material) : P(P), r(r), Material(Material) {}
+};
 
 struct plane
 {
     tracemath::vec3 P;
     tracemath::vec3 N;
 
-    plane(tracemath::vec3 P, tracemath::vec3 N) : P(P), N(N) {}
+    int Material;
+
+    plane(tracemath::vec3 P, tracemath::vec3 N, int Material) : P(P), N(N), Material(Material) {}
 };
 
+
+int sphere_intersect(sphere *Sphere, ray *Ray, float *t);
 int plane_intersect(plane *Plane, ray *Ray, float *t);
 
 #endif // TRACERATOPS_GEOMETRY_H
