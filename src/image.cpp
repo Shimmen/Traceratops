@@ -1,5 +1,3 @@
-#include <stdlib.h>
-
 #include "image.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION

@@ -8,6 +8,14 @@
 namespace tracemath
 {
     ///////////////////////////////////////////////////////////////
+    // constants etc.
+
+    constexpr float PI     = 3.14159265358979323846264338327950288f;
+    constexpr float TAU    = 2.0f * PI;
+
+    constexpr float TWO_PI = TAU;
+
+    ///////////////////////////////////////////////////////////////
     // vec3
 
     struct vec3

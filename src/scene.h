@@ -5,6 +5,7 @@
 
 #include "geometry.h"
 #include "material.h"
+#include "texture.h"
 
 class scene
 {
@@ -16,18 +17,21 @@ public:
     int register_material(const material& Material);
     const material& get_material(int Material) const;
 
-    // TODO!
-    //int register_renderable(const renderable& Renderable);
+    //void set_environment_map(std::unique_ptr<texture> EnvironmentMap);
+    //const texture *get_environment_map() const;
 
     //
-    // TODO: Implement a proper scene acceleation structure!
+    // TODO: Implement a proper scene acceleration structure!
+    // int register_renderable(const renderable& Renderable);
+    // (or similar)
     //
 
     std::vector<plane> Planes;
     std::vector<sphere> Spheres;
 
-    // TODO: Remove for proper lights later
-    tracemath::vec3 LightDirection;
+    // (sphere map)
+    std::unique_ptr<texture> EnvironmentMap;
+    float EnvironmentMultiplier;
 
 private:
 

@@ -162,10 +162,27 @@ vec3 trace_ray(ray *Ray, scene *Scene, rng& Rng, int Depth)
             }
         }
 
-        // No hit!
+        // If no geometry was hit
         if (MinDistance == MAXFLOAT)
         {
-            // TODO: Add color from environment etc.
+            const texture *EnvironmentMap = Scene->get_environment_map();
+            if (EnvironmentMap)
+            {
+                vec3 Dir = Ray->Direction;
+
+                // Convert direction to spherical coordinates
+                float Theta = acos(fmaxf(-1.0f, fminf(1.0f, Dir.y)));
+                float Phi = atan2(Dir.z, Dir.x);
+                if (Phi < 0.0f) Phi += TWO_PI;
+
+                float u = Phi / TWO_PI;
+                float v = Theta / PI;
+
+                // (nearest might be okay here since we trace multiple rays per pixel)
+                vec3 EnvironmentColor = EnvironmentMap->sample_texel_nearest(u, v);
+                ResultColor = ResultColor + (BounceAttenuation * EnvironmentColor * Scene->EnvironmentMultiplier);
+            }
+
             break;
         }
 
