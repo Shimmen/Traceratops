@@ -29,8 +29,6 @@ void make_test_image(image *Image)
 
 tracemath::vec3 get_jittered_primary_ray(image *Image, int PixelX, int PixelY, rng& Rng)
 {
-
-
     tracemath::vec3 Dir = {};
 
     auto x = (float)PixelX;
@@ -165,8 +163,7 @@ vec3 trace_ray(ray *Ray, scene *Scene, rng& Rng, int Depth)
         // If no geometry was hit
         if (MinDistance == MAXFLOAT)
         {
-            const texture *EnvironmentMap = Scene->get_environment_map();
-            if (EnvironmentMap)
+            if (Scene->EnvironmentMap)
             {
                 vec3 Dir = Ray->Direction;
 
@@ -179,7 +176,7 @@ vec3 trace_ray(ray *Ray, scene *Scene, rng& Rng, int Depth)
                 float v = Theta / PI;
 
                 // (nearest might be okay here since we trace multiple rays per pixel)
-                vec3 EnvironmentColor = EnvironmentMap->sample_texel_nearest(u, v);
+                vec3 EnvironmentColor = Scene->EnvironmentMap->sample_texel_nearest(u, v);
                 ResultColor = ResultColor + (BounceAttenuation * EnvironmentColor * Scene->EnvironmentMultiplier);
             }
 

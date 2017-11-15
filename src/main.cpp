@@ -11,7 +11,6 @@ std::unique_ptr<scene> create_and_setup_scene()
     std::unique_ptr<scene> Scene(new scene{});
 
     Scene->EnvironmentMap = std::unique_ptr<texture>(new texture{"assets/environment.hdr"});
-    //Scene->set_environment_map(std::move(EnvironmentMap));
     Scene->EnvironmentMultiplier = 10.0f;
 
     int DiffuseRedMaterial = Scene->register_material(material{vec3{1.0, 0.1, 0.1}, 0.8});
@@ -63,14 +62,14 @@ std::unique_ptr<scene> create_and_setup_scene()
 
 int main()
 {
-#if 1
+#if 0
     image Image{1920, 1080};
-    int RaysPerPixel = 1024;//2048;
+    int RaysPerPixel = 1024;
     int RayMaxDepth = 8;
 #else
     image Image{720, 480};
     int RaysPerPixel = 64;
-    int RayDepth = 4;
+    int RayMaxDepth = 4;
 #endif
 
     std::string ImageFileName = "traceratops_render.png";

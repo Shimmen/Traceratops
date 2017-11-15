@@ -23,23 +23,3 @@ scene::get_material(int Material) const
     assert(Material >= 0 && Material < RegisteredMaterials.size());
     return RegisteredMaterials[Material];
 }
-/*
-void
-scene::set_environment_map(std::unique_ptr<texture> EnvironmentMap)
-{
-    this->EnvironmentMap = std::move(EnvironmentMap);
-}
-
-const texture *
-scene::get_environment_map() const
-{
-    if (EnvironmentMap != nullptr)
-    {
-        return EnvironmentMap.get();
-    }
-    else
-    {
-        return nullptr;
-    }
-}
-*/

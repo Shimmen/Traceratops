@@ -135,6 +135,14 @@ namespace tracemath
     {
     public:
 
+        rng()
+        {
+            typedef std::chrono::high_resolution_clock myclock;
+            myclock::time_point now = myclock::now();
+            unsigned int seed = static_cast<unsigned int>(now.time_since_epoch().count());
+            engine.seed(seed);
+        }
+
         inline float random_01()
         {
             return uniform_01_dist(engine);
