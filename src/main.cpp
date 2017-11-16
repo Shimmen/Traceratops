@@ -11,7 +11,7 @@ std::unique_ptr<scene> create_and_setup_scene()
     std::unique_ptr<scene> Scene(new scene{});
 
     Scene->EnvironmentMap = std::unique_ptr<texture>(new texture{"assets/environment.hdr"});
-    Scene->EnvironmentMultiplier = 10.0f;
+    Scene->EnvironmentMultiplier = 6.0f;
 
     int DiffuseRedMaterial = Scene->register_material(material{vec3{1.0, 0.1, 0.1}, 0.8});
     int DiffuseGreenMaterial = Scene->register_material(material{vec3{0.4, 1.0, 0.4}, 0.7});
@@ -62,13 +62,19 @@ std::unique_ptr<scene> create_and_setup_scene()
 
 int main()
 {
-#if 0
+#define QUALITY 2
+
+#if QUALITY == 0
     image Image{1920, 1080};
     int RaysPerPixel = 1024;
     int RayMaxDepth = 8;
-#else
+#elif QUALITY == 1
     image Image{720, 480};
     int RaysPerPixel = 64;
+    int RayMaxDepth = 4;
+#elif QUALITY == 2
+    image Image{288, 196};
+    int RaysPerPixel = 1024;
     int RayMaxDepth = 4;
 #endif
 

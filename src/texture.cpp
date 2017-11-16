@@ -7,9 +7,6 @@ using namespace tracemath;
 
 texture::texture(const std::string& FileName)
 {
-    // For convenience sake we use OpenGL-style texture coordinates
-    stbi_set_flip_vertically_on_load(true);
-
     IsHdrTexture = static_cast<bool>(stbi_is_hdr(FileName.c_str()));
 
     if (IsHdrTexture)
@@ -19,6 +16,11 @@ texture::texture(const std::string& FileName)
     else
     {
         PixelsLDR = stbi_load(FileName.c_str(), &Width, &Height, nullptr, STBI_rgb);
+    }
+
+    if (!(PixelsHDR || PixelsLDR))
+    {
+        printf("Failed to load image '%s'!\n", FileName.c_str());
     }
 }
 

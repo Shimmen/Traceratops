@@ -1,5 +1,9 @@
 #include <random>
 
+#ifdef USE_OPENMP
+#include <omp.h>
+#endif
+
 #include "rendering.h"
 
 using namespace tracemath;
@@ -68,6 +72,9 @@ void render_scene(scene *Scene, image *Image, int RaysPerPixel, int MaxRayDepth)
 
     ray Ray = {};
 
+#ifdef USE_OPENMP
+#pragma omp parallel for
+#endif
     for (uint32_t y = 0; y < Image->Height; ++y)
     {
         for (uint32_t x = 0; x < Image->Width; ++x)
