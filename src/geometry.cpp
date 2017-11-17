@@ -4,14 +4,14 @@ using namespace tracemath;
 
 static const float IntersectionTolerance = 0.0001f;
 
-int sphere_intersect(sphere *Sphere, ray *Ray, float *t)
+int sphere_intersect(const sphere& Sphere, const ray& Ray, float *t)
 {
-    vec3 RelOrigin = Ray->Origin - Sphere->P;
+    vec3 RelOrigin = Ray.Origin - Sphere.P;
 
     // (quadratic formula)
-    float a = dot(Ray->Direction, Ray->Direction);
-    float b = 2.0f * dot(Ray->Direction, RelOrigin);
-    float c = dot(RelOrigin, RelOrigin) - (Sphere->r * Sphere->r);
+    float a = dot(Ray.Direction, Ray.Direction);
+    float b = 2.0f * dot(Ray.Direction, RelOrigin);
+    float c = dot(RelOrigin, RelOrigin) - (Sphere.r * Sphere.r);
 
     float Denom = 2.0f * a;
     float SqrtInner = b * b - 4.0f * a * c;
@@ -35,13 +35,16 @@ int sphere_intersect(sphere *Sphere, ray *Ray, float *t)
     return *t > 0;
 }
 
-int plane_intersect(plane *Plane, ray *Ray, float *t)
+int plane_intersect(const plane& Plane, const ray& Ray, float *t)
 {
-    float Denominator = dot(Plane->N, Ray->Direction);
+    float Denominator = dot(Plane.N, Ray.Direction);
     if (fabsf(Denominator) < IntersectionTolerance) return 0;
 
-    vec3 ToPlaneCenter = Plane->P - Ray->Origin;
+    // Uni-directional (backface culling)
+    if (Denominator > 0) return 0;
 
-    *t = dot(ToPlaneCenter, Plane->N) / Denominator;
+    vec3 ToPlaneCenter = Plane.P - Ray.Origin;
+
+    *t = dot(ToPlaneCenter, Plane.N) / Denominator;
     return *t > 0.0f;
 }

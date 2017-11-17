@@ -30,7 +30,7 @@ namespace tracemath
         vec3(float x, float y, float z) : x(x), y(y), z(z) {};
 
         // (has to be member function)
-        vec3 operator-() { return vec3{-x, -y, -z}; };
+        vec3 operator-() const { return vec3{-x, -y, -z}; };
     };
 
     static inline

@@ -23,6 +23,7 @@ public:
     // (or similar)
     //
 
+    std::vector<disc> Discs;
     std::vector<plane> Planes;
     std::vector<sphere> Spheres;
 

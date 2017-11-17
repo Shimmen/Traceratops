@@ -31,14 +31,14 @@ void make_test_image(image *Image)
 }
 #endif
 
-tracemath::vec3 get_jittered_primary_ray(image *Image, int PixelX, int PixelY, rng& Rng)
+tracemath::vec3 get_jittered_primary_ray(const image& Image, int PixelX, int PixelY, rng& Rng)
 {
     tracemath::vec3 Dir = {};
 
     auto x = (float)PixelX;
     auto y = (float)PixelY;
-    auto w = (float)Image->Width;
-    auto h = (float)Image->Height;
+    auto w = (float)Image.Width;
+    auto h = (float)Image.Height;
 
     // Should be [0, 1] for an offset inside the pixel
 #if 0
@@ -66,7 +66,7 @@ vec3 tone_map_hdr_to_ldr(const vec3& Hdr)
     return Hdr / (Hdr + vec3(1, 1, 1));
 }
 
-void render_scene(scene *Scene, image *Image, int RaysPerPixel, int MaxRayDepth)
+void render_scene(const scene& Scene, image& Image, int RaysPerPixel, int MaxRayDepth)
 {
     static rng Rng{};
 
@@ -75,22 +75,24 @@ void render_scene(scene *Scene, image *Image, int RaysPerPixel, int MaxRayDepth)
 #ifdef USE_OPENMP
 #pragma omp parallel for
 #endif
-    for (uint32_t y = 0; y < Image->Height; ++y)
+    for (uint32_t y = 0; y < Image.Height; ++y)
     {
-        for (uint32_t x = 0; x < Image->Width; ++x)
+        for (uint32_t x = 0; x < Image.Width; ++x)
         {
             if (y % 10 == 0 && x == 0)
             {
-                printf("... %d%% done ...\r", (int)roundf(static_cast<float>(y) / Image->Height * 100.0f));
+                printf("... %d%% done ...\r", (int)roundf(static_cast<float>(y) / Image.Height * 100.0f));
                 fflush(stdout);
             }
 
             vec3 AccumulatedHdrColor = vec3{};
             for (int i = 0; i < RaysPerPixel; ++i)
             {
-                Ray.Origin = vec3(0, 0, 0);
+                // TODO: Make a proper camera with fov etc!
+                Ray.Origin = vec3(0, 0, -1);
                 Ray.Direction = get_jittered_primary_ray(Image, x, y, Rng);
-                vec3 Color = trace_ray(&Ray, Scene, Rng, MaxRayDepth);
+
+                vec3 Color = trace_ray(Ray, Scene, Rng, MaxRayDepth);
                 AccumulatedHdrColor = AccumulatedHdrColor + Color;
             }
 
@@ -98,7 +100,7 @@ void render_scene(scene *Scene, image *Image, int RaysPerPixel, int MaxRayDepth)
             vec3 LdrColor = tone_map_hdr_to_ldr(AccumulatedHdrColor);
 
             uint32_t Pixel = pixel_from_color(LdrColor);
-            Image->set_pixel(x, Image->Height - y - 1, Pixel);
+            Image.set_pixel(x, Image.Height - y - 1, Pixel);
         }
     }
 
@@ -121,7 +123,7 @@ vec3 reflect(const vec3& I, const vec3& N)
 
 static float NormalOffsetAmount = 0.001f;
 
-vec3 trace_ray(ray *Ray, scene *Scene, rng& Rng, int Depth)
+vec3 trace_ray(ray Ray, const scene& Scene, rng& Rng, int Depth)
 {
     float Distance;
     float MinDistance;
@@ -137,30 +139,48 @@ vec3 trace_ray(ray *Ray, scene *Scene, rng& Rng, int Depth)
     {
         MinDistance = MAXFLOAT;
 
-        for (auto &Plane : Scene->Planes)
+        for (auto& Plane : Scene.Planes)
         {
-            if (plane_intersect(&Plane, Ray, &Distance))
+            if (plane_intersect(Plane, Ray, &Distance))
             {
                 if (Distance > 0 && Distance < MinDistance)
                 {
                     MinDistance = Distance;
 
-                    HitPoint = Ray->Origin + (Ray->Direction * Distance);
+                    HitPoint = Ray.Origin + (Ray.Direction * Distance);
                     HitNormal = Plane.N;
                     HitMaterial = Plane.Material;
                 }
             }
         }
 
-        for (auto &Sphere : Scene->Spheres)
+        for (auto& Disc : Scene.Discs)
         {
-            if (sphere_intersect(&Sphere, Ray, &Distance))
+            if (plane_intersect(Disc.Plane, Ray, &Distance))
+            {
+                if (Distance > 0 && Distance < MinDistance)
+                {
+                    HitPoint = Ray.Origin + (Ray.Direction * Distance);
+                    if (length2(HitPoint - Disc.Plane.P) <= Disc.r * Disc.r)
+                    {
+                        MinDistance = Distance;
+
+                        HitNormal = Disc.Plane.N;
+                        HitMaterial = Disc.Plane.Material;
+                    }
+                }
+            }
+        }
+
+        for (auto& Sphere : Scene.Spheres)
+        {
+            if (sphere_intersect(Sphere, Ray, &Distance))
             {
                 if (Distance > 0 && Distance < MinDistance)
                 {
                     MinDistance = Distance;
 
-                    HitPoint = Ray->Origin + (Ray->Direction * Distance);
+                    HitPoint = Ray.Origin + (Ray.Direction * Distance);
                     HitNormal = normalize(HitPoint - Sphere.P);
                     HitMaterial = Sphere.Material;
                 }
@@ -170,9 +190,9 @@ vec3 trace_ray(ray *Ray, scene *Scene, rng& Rng, int Depth)
         // If no geometry was hit
         if (MinDistance == MAXFLOAT)
         {
-            if (Scene->EnvironmentMap)
+            if (Scene.EnvironmentMap)
             {
-                vec3 Dir = Ray->Direction;
+                const vec3& Dir = Ray.Direction;
 
                 // Convert direction to spherical coordinates
                 float Theta = acos(fmaxf(-1.0f, fminf(1.0f, Dir.y)));
@@ -183,21 +203,21 @@ vec3 trace_ray(ray *Ray, scene *Scene, rng& Rng, int Depth)
                 float v = Theta / PI;
 
                 // (nearest might be okay here since we trace multiple rays per pixel)
-                vec3 EnvironmentColor = Scene->EnvironmentMap->sample_texel_nearest(u, v);
-                ResultColor = ResultColor + (BounceAttenuation * EnvironmentColor * Scene->EnvironmentMultiplier);
+                vec3 EnvironmentColor = Scene.EnvironmentMap->sample_texel_nearest(u, v);
+                ResultColor = ResultColor + (BounceAttenuation * EnvironmentColor * Scene.EnvironmentMultiplier);
             }
 
             break;
         }
 
-        auto& Material = Scene->get_material(HitMaterial);
+        auto& Material = Scene.get_material(HitMaterial);
 
         //
         // Calculate ray for next bounce
         //
 
         // TODO: Use a proper light model!!!
-        vec3 PerfectReflectedDirection = reflect(Ray->Direction, HitNormal);
+        vec3 PerfectReflectedDirection = reflect(Ray.Direction, HitNormal);
         vec3 DiffuseRoughDirection = random_hemisphere(HitNormal, Rng);
         vec3 NewRayDirection = lerp(PerfectReflectedDirection, DiffuseRoughDirection, Material.Roughness);
         normalize(&NewRayDirection);
@@ -215,8 +235,8 @@ vec3 trace_ray(ray *Ray, scene *Scene, rng& Rng, int Depth)
         float CosineAttenuation = fmaxf(0.0f, dot(NewRayDirection, HitNormal));
         BounceAttenuation = BounceAttenuation * Material.Albedo * CosineAttenuation;
 
-        Ray->Origin = NewRayOrigin;
-        Ray->Direction = NewRayDirection;
+        Ray.Origin = NewRayOrigin;
+        Ray.Direction = NewRayDirection;
     }
 
     return ResultColor;
