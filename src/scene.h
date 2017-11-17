@@ -2,6 +2,7 @@
 #define TRACERATOPS_SCENE_H
 
 #include <vector>
+#include <memory>
 
 #include "geometry.h"
 #include "material.h"

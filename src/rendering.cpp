@@ -137,7 +137,7 @@ vec3 trace_ray(ray Ray, const scene& Scene, rng& Rng, int Depth)
 
     for (int i = 0; i < Depth; ++i)
     {
-        MinDistance = MAXFLOAT;
+        MinDistance = std::numeric_limits<float>::infinity();
 
         for (auto& Plane : Scene.Planes)
         {
@@ -188,15 +188,15 @@ vec3 trace_ray(ray Ray, const scene& Scene, rng& Rng, int Depth)
         }
 
         // If no geometry was hit
-        if (MinDistance == MAXFLOAT)
+        if (MinDistance == std::numeric_limits<float>::infinity())
         {
             if (Scene.EnvironmentMap)
             {
                 const vec3& Dir = Ray.Direction;
 
                 // Convert direction to spherical coordinates
-                float Theta = acos(fmaxf(-1.0f, fminf(1.0f, Dir.y)));
-                float Phi = atan2(Dir.z, Dir.x);
+                float Theta = acosf(fmaxf(-1.0f, fminf(1.0f, Dir.y)));
+                float Phi = atan2f(Dir.z, Dir.x);
                 if (Phi < 0.0f) Phi += TWO_PI;
 
                 float u = Phi / TWO_PI;

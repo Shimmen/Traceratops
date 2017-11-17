@@ -2,6 +2,7 @@
 #define TRACERATOPS_MATH_H
 
 #include <cmath>
+#include <chrono>
 #include <cassert>
 #include <random>
 
