@@ -7,6 +7,7 @@
 #include "geometry.h"
 #include "material.h"
 #include "texture.h"
+#include "triangle_mesh.h"
 
 class scene
 {
@@ -18,11 +19,10 @@ public:
     int register_material(const material& Material);
     const material& get_material(int Material) const;
 
-    //
-    // TODO: Implement a proper scene acceleration structure!
-    // int register_renderable(const renderable& Renderable);
-    // (or similar)
-    //
+    void register_triangle_mesh(const std::string& ObjFileName, const tracemath::vec3& Translation);
+    const std::vector<tracemath::vec3>& get_triangle_vertices() const;
+
+    void prepare_for_rendering();
 
     std::vector<disc> Discs;
     std::vector<plane> Planes;
@@ -35,6 +35,10 @@ public:
 private:
 
     std::vector<material> RegisteredMaterials;
+
+    std::vector<tracemath::vec3> TriangleVertices;
+    std::vector<triangle_face>   TriangleFaces;
+    std::vector<triangle_mesh>   TriangleMeshes;
 
 };
 

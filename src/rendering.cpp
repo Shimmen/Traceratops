@@ -135,7 +135,7 @@ vec3 trace_ray(ray Ray, const scene& Scene, rng& Rng, int Depth)
     vec3 BounceAttenuation = vec3{1, 1, 1};
     vec3 ResultColor = vec3{0, 0, 0};
 
-    for (int i = 0; i < Depth; ++i)
+    for (int CurrentDepth = 0; CurrentDepth < Depth; ++CurrentDepth)
     {
         MinDistance = std::numeric_limits<float>::infinity();
 
@@ -183,6 +183,53 @@ vec3 trace_ray(ray Ray, const scene& Scene, rng& Rng, int Depth)
                     HitPoint = Ray.Origin + (Ray.Direction * Distance);
                     HitNormal = normalize(HitPoint - Sphere.P);
                     HitMaterial = Sphere.Material;
+                }
+            }
+        }
+
+        auto& TriangleVertices = Scene.get_triangle_vertices();
+        for (int i = 0; i < TriangleVertices.size(); i += 3)
+        {
+            // From GraphicsCodex
+            const vec3& V0 = TriangleVertices[i + 0];
+            const vec3& V1 = TriangleVertices[i + 1];
+            const vec3& V2 = TriangleVertices[i + 2];
+
+            const vec3& E1 = V1 - V0;
+            const vec3& E2 = V2 - V0;
+
+            vec3 N = cross(E1, E2);
+            normalize(&N);
+
+            vec3 q = cross(Ray.Direction, E2);
+            float a = dot(E1, q);
+
+            // (Nearly) parallel or backfacing, or close to the limit of precision?
+            if (dot(N, Ray.Direction) >= 0 || fabsf(a) <= 0.0001f)
+            {
+                continue;
+            }
+
+            const vec3& s = (Ray.Origin - V0) / a;
+            const vec3& r = cross(s, E1);
+
+            // Barycentric coordinates
+            float b[3];
+            b[0] = dot(s, q);
+            b[1] = dot(r, Ray.Direction);
+            b[2] = 1.0f - b[0] - b[1];
+
+            // Intersected inside triangle?
+            Distance = dot(E2, r);
+            if ((b[0] >= 0) && (b[1] >= 0) && (b[2] >= 0) && (Distance >= 0))
+            {
+                if (Distance < MinDistance)
+                {
+                    MinDistance = Distance;
+
+                    HitPoint = Ray.Origin + (Ray.Direction * Distance);
+                    HitNormal = N; // TODO: Use smooth face normal using barycentric coords!
+                    HitMaterial = 0; // TODO: Use face material!
                 }
             }
         }

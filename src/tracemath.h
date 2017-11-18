@@ -11,13 +11,24 @@ namespace tracemath
     ///////////////////////////////////////////////////////////////
     // constants etc.
 
-    constexpr float PI     = 3.14159265358979323846264338327950288f;
-    constexpr float TAU    = 2.0f * PI;
+    constexpr float PI  = 3.14159265358979323846264338327950288f;
+    constexpr float TAU = 2.0f * PI;
 
     constexpr float TWO_PI = TAU;
 
     ///////////////////////////////////////////////////////////////
-    // vec3
+    // vectors
+
+    struct vec2
+    {
+        float x;
+        float y;
+
+        vec2() = default;
+        vec2(vec2& other) = default;
+        vec2(const vec2& other) = default;
+        vec2(float x, float y) : x(x), y(y) {};
+    };
 
     struct vec3
     {
@@ -29,6 +40,7 @@ namespace tracemath
         vec3(vec3& other) = default;
         vec3(const vec3& other) = default;
         vec3(float x, float y, float z) : x(x), y(y), z(z) {};
+        explicit vec3(float val) : x(val), y(val), z(val) {};
 
         // (has to be member function)
         vec3 operator-() const { return vec3{-x, -y, -z}; };
@@ -124,9 +136,45 @@ namespace tracemath
     }
 
     static inline
-    vec3 lerp(const vec3& a, const vec3& b, float x)
+    vec3 lerp(const vec3 &a, const vec3 &b, float x)
     {
         return a + (b - a) * x;
+    }
+
+    static inline
+    void min(vec3 *a, const vec3& b)
+    {
+        a->x = fminf(a->x, b.x);
+        a->y = fminf(a->y, b.y);
+        a->z = fminf(a->z, b.z);
+    }
+
+    static inline
+    void max(vec3 *a, const vec3& b)
+    {
+        a->x = fmaxf(a->x, b.x);
+        a->y = fmaxf(a->y, b.y);
+        a->z = fmaxf(a->z, b.z);
+    }
+
+    ///////////////////////////////////////////////////////////////
+    // aabb
+
+    struct aabb
+    {
+        vec3 Min;
+        vec3 Max;
+
+        aabb() = default;
+        aabb(const vec3& Min, const vec3& Max) : Min(Min), Max(Max) {}
+    };
+
+    static inline
+    bool aabb_intersection(const aabb &a, const aabb &b)
+    {
+        return (a.Min.x <= b.Max.x && a.Max.x >= b.Min.x) &&
+               (a.Min.y <= b.Max.y && a.Max.y >= b.Min.y) &&
+               (a.Min.z <= b.Max.z && a.Max.z >= b.Min.z);
     }
 
     ///////////////////////////////////////////////////////////////
