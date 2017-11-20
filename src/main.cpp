@@ -82,6 +82,8 @@ int main()
     printf("Traceratops - rendering %dx%d image '%s'\n", Image.Width, Image.Height, ImageFileName.c_str());
 
     auto Scene = create_and_setup_scene();
+    Scene->prepare_for_rendering();
+
     render_scene(*Scene, Image, RaysPerPixel, RayMaxDepth);
 
     printf("Traceratops - rendering done, writing to file");

@@ -8,6 +8,7 @@
 #include "material.h"
 #include "texture.h"
 #include "triangle_mesh.h"
+#include "aabb.h"
 
 class scene
 {
@@ -23,6 +24,7 @@ public:
     const std::vector<tracemath::vec3>& get_triangle_vertices() const;
 
     void prepare_for_rendering();
+    bool is_prepared_for_rendering() const;
 
     std::vector<disc> Discs;
     std::vector<plane> Planes;
@@ -33,6 +35,11 @@ public:
     float EnvironmentMultiplier;
 
 private:
+
+    void recursive_assemble_bvh(aabb& Parent, int LeafTriangleMaxCount);
+
+    bool BVHUpToDate = false;
+    aabb BVHRoot;
 
     std::vector<material> RegisteredMaterials;
 

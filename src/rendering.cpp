@@ -2,6 +2,9 @@
 
 #ifdef USE_OPENMP
 #include <omp.h>
+#else
+#include <thread>
+#include <map>
 #endif
 
 #include "rendering.h"
@@ -68,23 +71,78 @@ vec3 tone_map_hdr_to_ldr(const vec3& Hdr)
 
 void render_scene(const scene& Scene, image& Image, int RaysPerPixel, int MaxRayDepth)
 {
-    static rng Rng{};
+    if (!Scene.is_prepared_for_rendering())
+    {
+        printf("Scene not prepared for rendering! Call prepare_for_rendering() on scene before rendering. Aborting!\n");
+        return;
+    }
 
     ray Ray = {};
 
-#ifdef USE_OPENMP
-#pragma omp parallel for
-#endif
+#define USE_MULTITHREADING 0
+#if USE_MULTITHREADING
+
+    // TODO: Fix this! I'm very confused and most probably I'm doing something very weird and wrong.
+
+    const int TotalRowCount = Image.Height;
+    std::atomic<int> RowsCompleted{0};
+
+    int NumThreadsToUse = std::thread::hardware_concurrency();
+    std::map<std::thread::id, rng> RngsForThread{};
+    std::vector<std::thread> Threads;
+
+    for (int ThreadIndex = 0; ThreadIndex < NumThreadsToUse; ++ThreadIndex)
+    {
+        Threads.emplace_back([&]() {
+
+            const auto& ThreadId = std::this_thread::get_id();
+            RngsForThread[ThreadId] = rng{ThreadId};
+
+            for (int y; (y = RowsCompleted++) < TotalRowCount; /* empty */)
+            {
+                rng& CurrentRng = RngsForThread[std::this_thread::get_id()];
+
+                for (int x = 0; x < Image.Width; ++x)
+                {
+                    vec3 AccumulatedHdrColor = vec3{};
+                    for (int i = 0; i < RaysPerPixel; ++i)
+                    {
+                        // TODO: Make a proper camera with fov etc!
+                        Ray.Origin = vec3(0, 0, -1);
+                        Ray.Direction = get_jittered_primary_ray(Image, x, y, CurrentRng);
+
+                        vec3 Color = trace_ray(Ray, Scene, CurrentRng, MaxRayDepth);
+                        AccumulatedHdrColor = AccumulatedHdrColor + Color;
+                    }
+
+                    AccumulatedHdrColor = AccumulatedHdrColor * (1.0f / RaysPerPixel);
+                    vec3 LdrColor = tone_map_hdr_to_ldr(AccumulatedHdrColor);
+
+                    uint32_t Pixel = pixel_from_color(LdrColor);
+                    Image.set_pixel(x, Image.Height - y - 1, Pixel);
+                }
+
+                float PercentDone = 100.0f * y / Image.Height;
+                printf("... %f%% done ...\r", PercentDone);
+                fflush(stdout);
+            }
+
+        });
+    }
+
+    for (auto& Thread: Threads)
+    {
+        Thread.join();
+    }
+
+#else
+
+    rng Rng{};
+
     for (uint32_t y = 0; y < Image.Height; ++y)
     {
         for (uint32_t x = 0; x < Image.Width; ++x)
         {
-            if (y % 10 == 0 && x == 0)
-            {
-                printf("... %d%% done ...\r", (int)roundf(static_cast<float>(y) / Image.Height * 100.0f));
-                fflush(stdout);
-            }
-
             vec3 AccumulatedHdrColor = vec3{};
             for (int i = 0; i < RaysPerPixel; ++i)
             {
@@ -102,7 +160,13 @@ void render_scene(const scene& Scene, image& Image, int RaysPerPixel, int MaxRay
             uint32_t Pixel = pixel_from_color(LdrColor);
             Image.set_pixel(x, Image.Height - y - 1, Pixel);
         }
+
+        float PercentDone = 100.0f * y / Image.Height;
+        printf("... %f%% done ...\r", PercentDone);
+        fflush(stdout);
     }
+
+#endif
 
     printf("... 100%% done ...\n");
 }
@@ -121,121 +185,151 @@ vec3 reflect(const vec3& I, const vec3& N)
     return I - N * 2.0f * dot(N, I);
 }
 
+bool get_first_intersection(const scene& Scene, const ray& Ray, hit_info *Hit)
+{
+    constexpr float Infinity = std::numeric_limits<float>::infinity();
+
+    //int HitMaterialIndex = 0; // (= default material)
+
+    float MinDistance = Infinity;
+    float Distance;
+
+    for (auto& Plane : Scene.Planes)
+    {
+        if (plane_intersect(Plane, Ray, &Distance))
+        {
+            if (Distance > 0 && Distance < MinDistance)
+            {
+                MinDistance = Distance;
+
+                Hit->Point = Ray.Origin + (Ray.Direction * Distance);
+                Hit->Normal = Plane.N;
+                Hit->Material = Plane.Material;
+            }
+        }
+    }
+
+    for (auto& Disc : Scene.Discs)
+    {
+        if (plane_intersect(Disc.Plane, Ray, &Distance))
+        {
+            if (Distance > 0 && Distance < MinDistance)
+            {
+                Hit->Point = Ray.Origin + (Ray.Direction * Distance);
+                if (length2(Hit->Point - Disc.Plane.P) <= Disc.r * Disc.r)
+                {
+                    MinDistance = Distance;
+
+                    Hit->Normal = Disc.Plane.N;
+                    Hit->Material = Disc.Plane.Material;
+                }
+            }
+        }
+    }
+
+    for (auto& Sphere : Scene.Spheres)
+    {
+        if (sphere_intersect(Sphere, Ray, &Distance))
+        {
+            if (Distance > 0 && Distance < MinDistance)
+            {
+                MinDistance = Distance;
+
+                Hit->Point = Ray.Origin + (Ray.Direction * Distance);
+                Hit->Normal = normalize(Hit->Point - Sphere.P);
+                Hit->Material = Sphere.Material;
+            }
+        }
+    }
+
+    auto& TriangleVertices = Scene.get_triangle_vertices();
+    for (int i = 0; i < TriangleVertices.size(); i += 3)
+    {
+        // From GraphicsCodex
+
+        const vec3& V0 = TriangleVertices[i + 0];
+        const vec3& V1 = TriangleVertices[i + 1];
+        const vec3& V2 = TriangleVertices[i + 2];
+
+        const vec3& E1 = V1 - V0;
+        const vec3& E2 = V2 - V0;
+
+        vec3 N = cross(E1, E2);
+        normalize(&N);
+
+        vec3 q = cross(Ray.Direction, E2);
+        float a = dot(E1, q);
+
+        // (Nearly) parallel or backfacing, or close to the limit of precision?
+        if (dot(N, Ray.Direction) >= 0 || fabsf(a) <= 0.0001f)
+        {
+            continue;
+        }
+
+        const vec3& s = (Ray.Origin - V0) / a;
+        const vec3& r = cross(s, E1);
+
+        // Barycentric coordinates
+        float b[3];
+        b[0] = dot(s, q);
+        b[1] = dot(r, Ray.Direction);
+        b[2] = 1.0f - b[0] - b[1];
+
+        // Intersected inside triangle?
+        Distance = dot(E2, r);
+        if ((b[0] >= 0) && (b[1] >= 0) && (b[2] >= 0) && (Distance >= 0))
+        {
+            if (Distance < MinDistance)
+            {
+                MinDistance = Distance;
+
+                Hit->Point = Ray.Origin + (Ray.Direction * Distance);
+                Hit->Normal = N; // TODO: Use smooth face normal using barycentric coords!
+                Hit->Material = 0; // TODO: Use face material!
+            }
+        }
+    }
+
+    return MinDistance != Infinity;
+}
+
 static float NormalOffsetAmount = 0.001f;
 
 vec3 trace_ray(ray Ray, const scene& Scene, rng& Rng, int Depth)
 {
-    float Distance;
-    float MinDistance;
-
-    int  HitMaterial = -1; // (default material)
-    vec3 HitPoint = {};
-    vec3 HitNormal = {};
-
     vec3 BounceAttenuation = vec3{1, 1, 1};
     vec3 ResultColor = vec3{0, 0, 0};
 
+    hit_info Hit{};
     for (int CurrentDepth = 0; CurrentDepth < Depth; ++CurrentDepth)
     {
-        MinDistance = std::numeric_limits<float>::infinity();
-
-        for (auto& Plane : Scene.Planes)
+        if (get_first_intersection(Scene, Ray, &Hit))
         {
-            if (plane_intersect(Plane, Ray, &Distance))
-            {
-                if (Distance > 0 && Distance < MinDistance)
-                {
-                    MinDistance = Distance;
+            const material& Material = Scene.get_material(Hit.Material);
 
-                    HitPoint = Ray.Origin + (Ray.Direction * Distance);
-                    HitNormal = Plane.N;
-                    HitMaterial = Plane.Material;
-                }
-            }
+            // TODO: Use a proper light model!!!
+            vec3 PerfectReflectedDirection = reflect(Ray.Direction, Hit.Normal);
+            vec3 DiffuseRoughDirection = random_hemisphere(Hit.Normal, Rng);
+            vec3 NewRayDirection = lerp(PerfectReflectedDirection, DiffuseRoughDirection, Material.Roughness);
+            normalize(&NewRayDirection);
+
+            // Offset slightly out by the normal so we aren't inside the currently hit object to begin with
+            vec3 NewRayOrigin = Hit.Point + (Hit.Normal * NormalOffsetAmount);
+
+            //
+            // Accumulate contribution
+            //
+
+            vec3 EmitColor = Material.Albedo * Material.Emittance;
+            ResultColor = ResultColor + (BounceAttenuation * EmitColor);
+
+            float CosineAttenuation = fmaxf(0.0f, dot(NewRayDirection, Hit.Normal));
+            BounceAttenuation = BounceAttenuation * Material.Albedo * CosineAttenuation;
+
+            Ray.Origin = NewRayOrigin;
+            Ray.Direction = NewRayDirection;
         }
-
-        for (auto& Disc : Scene.Discs)
-        {
-            if (plane_intersect(Disc.Plane, Ray, &Distance))
-            {
-                if (Distance > 0 && Distance < MinDistance)
-                {
-                    HitPoint = Ray.Origin + (Ray.Direction * Distance);
-                    if (length2(HitPoint - Disc.Plane.P) <= Disc.r * Disc.r)
-                    {
-                        MinDistance = Distance;
-
-                        HitNormal = Disc.Plane.N;
-                        HitMaterial = Disc.Plane.Material;
-                    }
-                }
-            }
-        }
-
-        for (auto& Sphere : Scene.Spheres)
-        {
-            if (sphere_intersect(Sphere, Ray, &Distance))
-            {
-                if (Distance > 0 && Distance < MinDistance)
-                {
-                    MinDistance = Distance;
-
-                    HitPoint = Ray.Origin + (Ray.Direction * Distance);
-                    HitNormal = normalize(HitPoint - Sphere.P);
-                    HitMaterial = Sphere.Material;
-                }
-            }
-        }
-
-        auto& TriangleVertices = Scene.get_triangle_vertices();
-        for (int i = 0; i < TriangleVertices.size(); i += 3)
-        {
-            // From GraphicsCodex
-            const vec3& V0 = TriangleVertices[i + 0];
-            const vec3& V1 = TriangleVertices[i + 1];
-            const vec3& V2 = TriangleVertices[i + 2];
-
-            const vec3& E1 = V1 - V0;
-            const vec3& E2 = V2 - V0;
-
-            vec3 N = cross(E1, E2);
-            normalize(&N);
-
-            vec3 q = cross(Ray.Direction, E2);
-            float a = dot(E1, q);
-
-            // (Nearly) parallel or backfacing, or close to the limit of precision?
-            if (dot(N, Ray.Direction) >= 0 || fabsf(a) <= 0.0001f)
-            {
-                continue;
-            }
-
-            const vec3& s = (Ray.Origin - V0) / a;
-            const vec3& r = cross(s, E1);
-
-            // Barycentric coordinates
-            float b[3];
-            b[0] = dot(s, q);
-            b[1] = dot(r, Ray.Direction);
-            b[2] = 1.0f - b[0] - b[1];
-
-            // Intersected inside triangle?
-            Distance = dot(E2, r);
-            if ((b[0] >= 0) && (b[1] >= 0) && (b[2] >= 0) && (Distance >= 0))
-            {
-                if (Distance < MinDistance)
-                {
-                    MinDistance = Distance;
-
-                    HitPoint = Ray.Origin + (Ray.Direction * Distance);
-                    HitNormal = N; // TODO: Use smooth face normal using barycentric coords!
-                    HitMaterial = 0; // TODO: Use face material!
-                }
-            }
-        }
-
-        // If no geometry was hit
-        if (MinDistance == std::numeric_limits<float>::infinity())
+        else
         {
             if (Scene.EnvironmentMap)
             {
@@ -256,34 +350,6 @@ vec3 trace_ray(ray Ray, const scene& Scene, rng& Rng, int Depth)
 
             break;
         }
-
-        auto& Material = Scene.get_material(HitMaterial);
-
-        //
-        // Calculate ray for next bounce
-        //
-
-        // TODO: Use a proper light model!!!
-        vec3 PerfectReflectedDirection = reflect(Ray.Direction, HitNormal);
-        vec3 DiffuseRoughDirection = random_hemisphere(HitNormal, Rng);
-        vec3 NewRayDirection = lerp(PerfectReflectedDirection, DiffuseRoughDirection, Material.Roughness);
-        normalize(&NewRayDirection);
-
-        // Offset slightly out by the normal so we aren't inside the currently hit object to begin with
-        vec3 NewRayOrigin = HitPoint + (HitNormal * NormalOffsetAmount);
-
-        //
-        // Accumulate contribution
-        //
-
-        vec3 EmitColor = Material.Albedo * Material.Emittance;
-        ResultColor = ResultColor + (BounceAttenuation * EmitColor);
-
-        float CosineAttenuation = fmaxf(0.0f, dot(NewRayDirection, HitNormal));
-        BounceAttenuation = BounceAttenuation * Material.Albedo * CosineAttenuation;
-
-        Ray.Origin = NewRayOrigin;
-        Ray.Direction = NewRayDirection;
     }
 
     return ResultColor;

@@ -17,7 +17,8 @@ struct triangle_mesh
     int FirstVertex;
     int VertexCount;
 
-    tracemath::aabb BoundingBox;
+    // TODO: Should I have this?
+    //tracemath::aabb BoundingBox;
 };
 
 #endif // TRACERATOPS_TRIANGLE_MESH_H

@@ -5,6 +5,7 @@
 #include <chrono>
 #include <cassert>
 #include <random>
+#include <thread>
 
 namespace tracemath
 {
@@ -39,11 +40,23 @@ namespace tracemath
         vec3() = default;
         vec3(vec3& other) = default;
         vec3(const vec3& other) = default;
-        vec3(float x, float y, float z) : x(x), y(y), z(z) {};
-        explicit vec3(float val) : x(val), y(val), z(val) {};
+        vec3(float x, float y, float z) : x(x), y(y), z(z) {}
+        explicit vec3(float val) : x(val), y(val), z(val) {}
 
-        // (has to be member function)
-        vec3 operator-() const { return vec3{-x, -y, -z}; };
+        vec3 operator-() const
+        {
+            return vec3{-x, -y, -z};
+        }
+
+        float& operator[](int i)
+        {
+            assert(i >= 0 && i < 3);
+            if (i == 0) return x;
+            if (i == 1) return y;
+            if (i == 2) return z;
+            return x; // shouldn't happen
+        }
+
     };
 
     static inline
@@ -157,24 +170,39 @@ namespace tracemath
         a->z = fmaxf(a->z, b.z);
     }
 
-    ///////////////////////////////////////////////////////////////
-    // aabb
-
-    struct aabb
+    static inline
+    int index_of_min(const vec3& a)
     {
-        vec3 Min;
-        vec3 Max;
-
-        aabb() = default;
-        aabb(const vec3& Min, const vec3& Max) : Min(Min), Max(Max) {}
-    };
+        if (a.x < a.y && a.x < a.z) return 0;
+        if (a.y < a.x && a.y < a.z) return 1;
+        if (a.z < a.x && a.z < a.y) return 2;
+        return 0; // (all are equal, just select one axis)
+    }
 
     static inline
-    bool aabb_intersection(const aabb &a, const aabb &b)
+    int index_of_max(const vec3& a)
     {
-        return (a.Min.x <= b.Max.x && a.Max.x >= b.Min.x) &&
-               (a.Min.y <= b.Max.y && a.Max.y >= b.Min.y) &&
-               (a.Min.z <= b.Max.z && a.Max.z >= b.Min.z);
+        if (a.x > a.y && a.x > a.z) return 0;
+        if (a.y > a.x && a.y > a.z) return 1;
+        if (a.z > a.x && a.z > a.y) return 2;
+        return 0; // (all are equal, just select one axis)
+    }
+
+    static inline
+    vec3 max_and_zeroes(const vec3& a)
+    {
+        vec3 Res{};
+        Res.x = (a.x > a.y && a.x > a.z) ? a.x : 0;
+        Res.y = (a.y > a.x && a.y > a.z) ? a.y : 0;
+        Res.z = (a.z > a.x && a.z > a.y) ? a.z : 0;
+
+        // (all are equal, just select one axis)
+        if (Res.x == 0 && Res.y == 0 && Res.z == 0)
+        {
+            Res.x = a.x;
+        }
+
+        return Res;
     }
 
     ///////////////////////////////////////////////////////////////
@@ -190,6 +218,12 @@ namespace tracemath
             myclock::time_point now = myclock::now();
             unsigned int seed = static_cast<unsigned int>(now.time_since_epoch().count());
             engine.seed(seed);
+        }
+
+        explicit rng(std::thread::id ThreadId)
+        {
+            size_t ThreadIdHash = std::hash<std::thread::id>{}(ThreadId);
+            engine.seed(static_cast<unsigned int>(ThreadIdHash));
         }
 
         inline float random_01()

@@ -1,4 +1,5 @@
 #include "scene.h"
+#include "tracemath.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
@@ -30,6 +31,8 @@ scene::get_material(int Material) const
 void
 scene::register_triangle_mesh(const std::string& ObjFileName, const tracemath::vec3& Translation)
 {
+    BVHUpToDate = false;
+
     tinyobj::attrib_t Attributes;
     std::vector<tinyobj::shape_t> Shapes;
     std::vector<tinyobj::material_t> Materials;
@@ -63,8 +66,9 @@ scene::register_triangle_mesh(const std::string& ObjFileName, const tracemath::v
         size_t NextVertexIndex = TriangleVertices.size();
         Mesh.FirstVertex = static_cast<int>(NextVertexIndex);
 
-        Mesh.BoundingBox.Min = vec3{ +std::numeric_limits<float>::infinity() };
-        Mesh.BoundingBox.Max = vec3{ -std::numeric_limits<float>::infinity() };
+        // TODO: Maybe include this?!
+        //Mesh.BoundingBox.Min = vec3{ +std::numeric_limits<float>::infinity() };
+        //Mesh.BoundingBox.Max = vec3{ -std::numeric_limits<float>::infinity() };
 
         /////////////////////////////////////////////////////////////////////////
 
@@ -91,8 +95,8 @@ scene::register_triangle_mesh(const std::string& ObjFileName, const tracemath::v
                 TriangleVertices.push_back(Vertex);
 
                 // Update the bounding box for the current mesh
-                min(&Mesh.BoundingBox.Min, Vertex);
-                max(&Mesh.BoundingBox.Max, Vertex);
+                //min(&Mesh.BoundingBox.Min, Vertex);
+                //max(&Mesh.BoundingBox.Max, Vertex);
 
                 TriangleFace.Vertices[VertexIndex] = Vertex;
 
@@ -140,5 +144,107 @@ scene::get_triangle_vertices() const
 void
 scene::prepare_for_rendering()
 {
-    // TODO: Assemble some acceleration structure here!
+    // Assemble a BVH (bounding volume hierarchy), top down
+
+    constexpr float Infinity = std::numeric_limits<float>::infinity();
+    vec3 CurrentMin = vec3{ +Infinity };
+    vec3 CurrentMax = vec3{ -Infinity };
+
+    // Define BVH root
+    for (const vec3& Vertex: TriangleVertices)
+    {
+        max(&CurrentMax, Vertex);
+        min(&CurrentMin, Vertex);
+    }
+    BVHRoot = aabb{CurrentMin, CurrentMax};
+
+    const int LeafTriangleMaxCount = 5;
+    recursive_assemble_bvh(BVHRoot, LeafTriangleMaxCount);
+
+    BVHUpToDate = true;
+}
+
+bool
+scene::is_prepared_for_rendering() const
+{
+    return BVHUpToDate;
+}
+
+void
+scene::recursive_assemble_bvh(aabb& Parent, int LeafTriangleMaxCount)
+{
+    // Split the current AABB in half by the longest axis
+    const vec3& Diff = Parent.Max - Parent.Min;
+    const vec3& LongestAxisDiff = max_and_zeroes(Diff);
+    const int IndexOfMax = index_of_max(Diff);
+
+    // Calculate max corner of "left" part
+    vec3 LeftMax = Diff;
+    LeftMax[IndexOfMax] = 0.5f * LeftMax[IndexOfMax];
+
+    // Calculate min corner of "right" part
+    vec3 OffsetToMin = LongestAxisDiff;
+    OffsetToMin[IndexOfMax] = 0.5f * OffsetToMin[IndexOfMax];
+    vec3 RightMin = Parent.Min + OffsetToMin;
+
+    // TODO: --------------------------------------------------------------------------- :TODO
+    // TODO: -- Is this really a BVH? Since it doesn't try to shrink the child AABBs? -- :TODO
+    // TODO: --------------------------------------------------------------------------- :TODO
+    aabb LeftChild{Parent.Min, LeftMax};
+    aabb RightChild{RightMin, Parent.Max};
+
+    //
+    // Check which triangles are contained in which part
+    //
+
+    vec3 DividingPlaneCenter = Parent.Min + (Diff * 0.5f);
+    vec3 DividingPlaneNormal = normalize(max_and_zeroes(Diff));
+
+    for (const triangle_face *Triangle: Parent.ContainedTriangles)
+    {
+        bool InLeft = false;
+        bool InRight = false;
+
+        float x;
+
+        x = dot(Triangle->Vertices[0] - DividingPlaneCenter, DividingPlaneNormal);
+        if (x >= 0.0f) InRight = true;
+        if (x <  0.0f) InLeft = true;
+
+        x = dot(Triangle->Vertices[1] - DividingPlaneCenter, DividingPlaneNormal);
+        if (x >= 0.0f) InRight = true;
+        if (x <  0.0f) InLeft = true;
+
+        x = dot(Triangle->Vertices[2] - DividingPlaneCenter, DividingPlaneNormal);
+        if (x >= 0.0f) InRight = true;
+        if (x <  0.0f) InLeft = true;
+
+        if (InLeft) LeftChild.ContainedTriangles.push_back(Triangle);
+        if (InRight) RightChild.ContainedTriangles.push_back(Triangle);
+    }
+
+    //
+    // Only create children if they contain at least one triangle!
+    // Don't create sub-volumes if they contain less triangles than LeafTriangleMaxCount!
+    //
+
+    size_t LeftCount = LeftChild.ContainedTriangles.size();
+    if (LeftCount > 0)
+    {
+        Parent.add_child(LeftChild);
+        if (LeftCount > LeafTriangleMaxCount)
+        {
+            recursive_assemble_bvh(LeftChild, LeafTriangleMaxCount);
+        }
+    }
+
+    size_t RightCount = RightChild.ContainedTriangles.size();
+    if (RightCount > 0)
+    {
+        Parent.add_child(RightChild);
+        if (LeftCount > LeafTriangleMaxCount)
+        {
+            recursive_assemble_bvh(RightChild, LeafTriangleMaxCount);
+        }
+    }
 }
