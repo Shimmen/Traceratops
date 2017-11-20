@@ -13,7 +13,7 @@ std::unique_ptr<scene> create_and_setup_scene()
     Scene->EnvironmentMap = std::unique_ptr<texture>(new texture{"assets/environment.hdr"});
     Scene->EnvironmentMultiplier = 3.0f;
 
-    Scene->register_triangle_mesh("assets/lowpoly_tree.obj", vec3{0, 0.6f, 3.0f});
+    Scene->register_triangle_mesh("assets/lowpoly_tree.obj", vec3{0.1f, 0.6f, 3.0f});
 
     int DiffuseRedMaterial = Scene->register_material(material{vec3{1.0, 0.1, 0.1}, 0.8});
     int DiffuseGreenMaterial = Scene->register_material(material{vec3{0.4, 1.0, 0.4}, 0.7});
@@ -58,11 +58,11 @@ std::unique_ptr<scene> create_and_setup_scene()
 
 int main()
 {
-#define QUALITY 3
+#define QUALITY 0
 
 #if QUALITY == 0
     image Image{1920, 1080};
-    int RaysPerPixel = 1024;
+    int RaysPerPixel = 2;//1024;
     int RayMaxDepth = 8;
 #elif QUALITY == 1
     image Image{720, 480};

@@ -8,6 +8,7 @@
 #endif
 
 #include "rendering.h"
+#include "aabb.h"
 
 using namespace tracemath;
 
@@ -189,11 +190,9 @@ bool get_first_intersection(const scene& Scene, const ray& Ray, hit_info *Hit)
 {
     constexpr float Infinity = std::numeric_limits<float>::infinity();
 
-    //int HitMaterialIndex = 0; // (= default material)
-
     float MinDistance = Infinity;
     float Distance;
-
+/*
     for (auto& Plane : Scene.Planes)
     {
         if (plane_intersect(Plane, Ray, &Distance))
@@ -241,7 +240,82 @@ bool get_first_intersection(const scene& Scene, const ray& Ray, hit_info *Hit)
             }
         }
     }
+*/
 
+    std::vector<size_t> TraverseStack{};
+    TraverseStack.push_back(0); // index 0 is root node(?)
+
+    while (!TraverseStack.empty())
+    {
+        size_t CurrentIndex = TraverseStack.back();
+        TraverseStack.pop_back();
+
+        const aabb& Current = Scene.BVHElements[CurrentIndex];
+
+        if (aabb_ray_intersection(Current, Ray.Direction, Ray.Origin))
+        {
+            // If is leaf node
+            if (Current.Children.empty())
+            {
+                const auto& Triangles = Current.ContainedTriangles;
+                for (const triangle_face *Triangle: Triangles)
+                {
+                    // From GraphicsCodex
+
+                    const vec3& V0 = Triangle->Vertices[0];
+                    const vec3& V1 = Triangle->Vertices[1];
+                    const vec3& V2 = Triangle->Vertices[2];
+
+                    const vec3& E1 = V1 - V0;
+                    const vec3& E2 = V2 - V0;
+
+                    vec3 N = cross(E1, E2);
+                    normalize(&N);
+
+                    vec3 q = cross(Ray.Direction, E2);
+                    float a = dot(E1, q);
+
+                    // (Nearly) parallel or backfacing, or close to the limit of precision?
+                    if (dot(N, Ray.Direction) >= 0 || fabsf(a) <= 0.0001f)
+                    {
+                        continue;
+                    }
+
+                    const vec3& s = (Ray.Origin - V0) / a;
+                    const vec3& r = cross(s, E1);
+
+                    // Barycentric coordinates
+                    float b[3];
+                    b[0] = dot(s, q);
+                    b[1] = dot(r, Ray.Direction);
+                    b[2] = 1.0f - b[0] - b[1];
+
+                    // Intersected inside triangle?
+                    Distance = dot(E2, r);
+                    if ((b[0] >= 0) && (b[1] >= 0) && (b[2] >= 0) && (Distance >= 0))
+                    {
+                        if (Distance < MinDistance)
+                        {
+                            MinDistance = Distance;
+
+                            Hit->Point = Ray.Origin + (Ray.Direction * Distance);
+                            Hit->Normal = N; // TODO: Use smooth face normal using barycentric coords!
+                            Hit->Material = 0; // TODO: Use face material!
+                        }
+                    }
+                }
+            }
+            else
+            {
+                for (size_t ChildIndex: Current.Children)
+                {
+                    TraverseStack.push_back(ChildIndex);
+                }
+            }
+        }
+    }
+
+/*
     auto& TriangleVertices = Scene.get_triangle_vertices();
     for (int i = 0; i < TriangleVertices.size(); i += 3)
     {
@@ -289,6 +363,7 @@ bool get_first_intersection(const scene& Scene, const ray& Ray, hit_info *Hit)
             }
         }
     }
+*/
 
     return MinDistance != Infinity;
 }

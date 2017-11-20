@@ -4,11 +4,12 @@
 #include <vector>
 #include <memory>
 
+#include "aabb.h"
+#include "texture.h"
 #include "geometry.h"
 #include "material.h"
-#include "texture.h"
 #include "triangle_mesh.h"
-#include "aabb.h"
+
 
 class scene
 {
@@ -34,12 +35,12 @@ public:
     std::unique_ptr<texture> EnvironmentMap;
     float EnvironmentMultiplier;
 
-private:
+//private:
 
-    void recursive_assemble_bvh(aabb& Parent, int LeafTriangleMaxCount);
+    void assemble_bvh(int LeafTriangleMaxCount);
 
     bool BVHUpToDate = false;
-    aabb BVHRoot;
+    std::vector<aabb> BVHElements;
 
     std::vector<material> RegisteredMaterials;
 

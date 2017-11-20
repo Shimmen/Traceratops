@@ -54,7 +54,16 @@ namespace tracemath
             if (i == 0) return x;
             if (i == 1) return y;
             if (i == 2) return z;
-            return x; // shouldn't happen
+            return x; // (shouldn't happen)
+        }
+
+        float operator[](int i) const
+        {
+            assert(i >= 0 && i < 3);
+            if (i == 0) return x;
+            if (i == 1) return y;
+            if (i == 2) return z;
+            return x; // (shouldn't happen)
         }
 
     };
