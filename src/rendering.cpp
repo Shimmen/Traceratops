@@ -174,6 +174,8 @@ void render_scene(const scene& Scene, image& Image, int RaysPerPixel, int MaxRay
 
 vec3 random_hemisphere(vec3 N, rng& Rng)
 {
+    // TODO: Make better version of this!
+
     normalize(&N);
 
     vec3 RandomOffset = vec3{ Rng.random_neg11(), Rng.random_neg11(), Rng.random_neg11() };
@@ -247,6 +249,7 @@ bool get_first_intersection(const scene& Scene, const ray& Ray, hit_info *Hit)
 
     while (!TraverseStack.empty())
     {
+        // Depth-first traversal
         size_t CurrentIndex = TraverseStack.back();
         TraverseStack.pop_back();
 

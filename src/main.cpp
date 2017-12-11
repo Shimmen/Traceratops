@@ -62,8 +62,8 @@ int main()
 
 #if QUALITY == 0
     image Image{1920, 1080};
-    int RaysPerPixel = 2;//1024;
-    int RayMaxDepth = 8;
+    int RaysPerPixel = 1;//1024;
+    int RayMaxDepth = 1;
 #elif QUALITY == 1
     image Image{720, 480};
     int RaysPerPixel = 64;

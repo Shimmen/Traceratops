@@ -37,7 +37,7 @@ public:
 
 //private:
 
-    void assemble_bvh(int LeafTriangleMaxCount);
+    void assemble_bvh(int LeafTriangleMaxCount, int MaxDepth);
 
     bool BVHUpToDate = false;
     std::vector<aabb> BVHElements;

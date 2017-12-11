@@ -33,9 +33,16 @@ bool aabb_intersection(const aabb& a, const aabb& b)
 static inline
 bool aabb_point_intersection(const aabb& a, const tracemath::vec3& p)
 {
+#if 1
     return p.x >= a.Min.x && p.x <= a.Max.x &&
            p.y >= a.Min.y && p.y <= a.Max.y &&
            p.z >= a.Min.z && p.z <= a.Max.z;
+#else
+    constexpr float e = 0.5f;
+    return (p.x + e) >= a.Min.x && (p.x - e) <= a.Max.x &&
+           (p.y + e) >= a.Min.y && (p.y - e) <= a.Max.y &&
+           (p.z + e) >= a.Min.z && (p.z - e) <= a.Max.z;
+#endif
 }
 
 

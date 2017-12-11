@@ -167,8 +167,9 @@ scene::prepare_for_rendering()
         BVHElements[0].ContainedTriangles.push_back(&Triangle);
     }
 
-    const int LeafTriangleMaxCount = 10;
-    assemble_bvh(LeafTriangleMaxCount);
+    const int LeafTriangleMaxCount = 5;
+    const int MaxTreeDepth = 6;
+    assemble_bvh(LeafTriangleMaxCount, MaxTreeDepth);
 
     BVHUpToDate = true;
     printf("... done preparing scene\n");
@@ -182,15 +183,26 @@ scene::is_prepared_for_rendering() const
 }
 
 void
-scene::assemble_bvh(int LeafTriangleMaxCount)
+scene::assemble_bvh(int LeafTriangleMaxCount, int MaxDepth)
 {
-    std::vector<size_t> Stack{};
-    Stack.push_back(0);
+    std::vector<std::pair<int, int>> Stack{};
+
+    auto Root = std::make_pair(0, 0);
+    Stack.push_back(Root);
 
     while (!Stack.empty())
     {
-        size_t Current = Stack.back();
+        const std::pair<int, int>& CurrentElement = Stack.back();
         Stack.pop_back();
+
+        // If we have reached the max depth in this node, don't add any children
+        int CurrentDepth = CurrentElement.second;
+        if (CurrentDepth == MaxDepth - 1)
+        {
+            continue;
+        }
+
+        int Current = CurrentElement.first;
 
         // Split the current AABB in half by the longest axis
         const vec3 CurrentMax = BVHElements[Current].Max;
@@ -201,12 +213,12 @@ scene::assemble_bvh(int LeafTriangleMaxCount)
 
         // Calculate max corner of "left" part
         vec3 LeftMaxDiff = Diff;
-        LeftMaxDiff[IndexOfMax] = 0.6f * LeftMaxDiff[IndexOfMax];
+        LeftMaxDiff[IndexOfMax] = 0.5f * LeftMaxDiff[IndexOfMax];
         vec3 LeftMax = CurrentMin + LeftMaxDiff;
 
         // Calculate min corner of "right" part
         vec3 OffsetToMin = LongestAxisDiff;
-        OffsetToMin[IndexOfMax] = 0.6f * OffsetToMin[IndexOfMax];
+        OffsetToMin[IndexOfMax] = 0.5f * OffsetToMin[IndexOfMax];
         vec3 RightMin = CurrentMin + OffsetToMin;
 
         aabb LeftChild = aabb{CurrentMin, LeftMax};
@@ -223,13 +235,20 @@ scene::assemble_bvh(int LeafTriangleMaxCount)
 
         for (const triangle_face *Triangle: BVHElements[Current].ContainedTriangles)
         {
-            bool InLeft = aabb_point_intersection(LeftChild, Triangle->Vertices[0]) ||
-                          aabb_point_intersection(LeftChild, Triangle->Vertices[1]) ||
-                          aabb_point_intersection(LeftChild, Triangle->Vertices[2]);
+            constexpr float Infinity = std::numeric_limits<float>::infinity();
+            vec3 Min = vec3{ +Infinity };
+            vec3 Max = vec3{ -Infinity };
 
-            bool InRight = aabb_point_intersection(RightChild, Triangle->Vertices[0]) ||
-                           aabb_point_intersection(RightChild, Triangle->Vertices[1]) ||
-                           aabb_point_intersection(RightChild, Triangle->Vertices[2]);
+            for (const vec3& Vertex: Triangle->Vertices)
+            {
+                max(&Max, Vertex);
+                min(&Min, Vertex);
+            }
+
+            aabb TriangleAABB{ Min, Max };
+
+            bool InLeft  = aabb_intersection(LeftChild, TriangleAABB);
+            bool InRight = aabb_intersection(RightChild, TriangleAABB);
 
             if (InLeft) LeftChild.ContainedTriangles.push_back(Triangle);
             if (InRight) RightChild.ContainedTriangles.push_back(Triangle);
@@ -251,7 +270,8 @@ scene::assemble_bvh(int LeafTriangleMaxCount)
 
             if (LeftCount > LeafTriangleMaxCount)
             {
-                Stack.push_back(LeftChildIndex);
+
+                Stack.emplace_back(LeftChildIndex, CurrentDepth + 1);
             }
         }
 
@@ -264,102 +284,10 @@ scene::assemble_bvh(int LeafTriangleMaxCount)
 
             if (RightCount > LeafTriangleMaxCount)
             {
-                Stack.push_back(RightChildIndex);
+                Stack.emplace_back(RightChildIndex, CurrentDepth + 1);
             }
         }
     }
 
     BVHUpToDate = true;
 }
-/*
-void
-scene::recursive_assemble_bvh(size_t ParentIndex, int LeafTriangleMaxCount)
-{
-    // Split the current AABB in half by the longest axis
-    const vec3& Diff = BVHElements[ParentIndex].Max - BVHElements[ParentIndex].Min;
-    const vec3& LongestAxisDiff = max_and_zeroes(Diff);
-    const int IndexOfMax = index_of_max(Diff);
-
-    // Calculate max corner of "left" part
-    vec3 LeftMax = Diff;
-    LeftMax[IndexOfMax] = 0.5f * LeftMax[IndexOfMax];
-
-    // Calculate min corner of "right" part
-    vec3 OffsetToMin = LongestAxisDiff;
-    OffsetToMin[IndexOfMax] = 0.5f * OffsetToMin[IndexOfMax];
-    vec3 RightMin = BVHElements[ParentIndex].Min + OffsetToMin;
-
-    // TODO: --------------------------------------------------------------------------- :TODO
-    // TODO: -- Is this really a BVH? Since it doesn't try to shrink the child AABBs? -- :TODO
-    // TODO: --------------------------------------------------------------------------- :TODO
-    size_t LeftChildIndex = BVHElements.size();
-    BVHElements.emplace_back(BVHElements[ParentIndex].Min, LeftMax);
-    size_t RightChildIndex = BVHElements.size();
-    BVHElements.emplace_back(RightMin, BVHElements[ParentIndex].Max);
-
-    //
-    // Check which triangles are contained in which part
-    //
-
-    vec3 DividingPlaneCenter = BVHElements[ParentIndex].Min + (Diff * 0.5f);
-    vec3 DividingPlaneNormal = normalize(max_and_zeroes(Diff));
-
-    for (const triangle_face *Triangle: BVHElements[ParentIndex].ContainedTriangles)
-    {
-        bool InLeft = false;
-        bool InRight = false;
-
-        float x;
-
-        x = dot(Triangle->Vertices[0] - DividingPlaneCenter, DividingPlaneNormal);
-        if (x >= 0.0f) InRight = true;
-        if (x <  0.0f) InLeft = true;
-
-        x = dot(Triangle->Vertices[1] - DividingPlaneCenter, DividingPlaneNormal);
-        if (x >= 0.0f) InRight = true;
-        if (x <  0.0f) InLeft = true;
-
-        x = dot(Triangle->Vertices[2] - DividingPlaneCenter, DividingPlaneNormal);
-        if (x >= 0.0f) InRight = true;
-        if (x <  0.0f) InLeft = true;
-
-        if (InLeft) BVHElements[LeftChildIndex].ContainedTriangles.push_back(Triangle);
-        if (InRight) BVHElements[RightChildIndex].ContainedTriangles.push_back(Triangle);
-    }
-
-    //
-    // Only create children if they contain at least one triangle!
-    // Don't create sub-volumes if they contain less triangles than LeafTriangleMaxCount!
-    //
-
-    size_t LeftCount = BVHElements[LeftChildIndex].ContainedTriangles.size();
-    if (LeftCount > 0)
-    {
-        BVHElements[ParentIndex].Children.push_back(LeftChildIndex);
-        if (LeftCount > LeafTriangleMaxCount)
-        {
-            //LeftChild.IsLeaf = false;
-            recursive_assemble_bvh(LeftChildIndex, LeafTriangleMaxCount);
-        }
-        else
-        {
-            //LeftChild.IsLeaf = true;
-        }
-    }
-
-    size_t RightCount = BVHElements[RightChildIndex].ContainedTriangles.size();
-    if (RightCount > 0)
-    {
-        BVHElements[ParentIndex].Children.push_back(RightChildIndex);
-        if (RightCount > LeafTriangleMaxCount)
-        {
-            //RightChild.IsLeaf = false;
-            recursive_assemble_bvh(RightChildIndex, LeafTriangleMaxCount);
-        }
-        else
-        {
-            //RightChild.IsLeaf = true;
-        }
-    }
-}
-*/
