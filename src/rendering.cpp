@@ -194,7 +194,7 @@ bool get_first_intersection(const scene& Scene, const ray& Ray, hit_info *Hit)
 
     float MinDistance = Infinity;
     float Distance;
-/*
+
     for (auto& Plane : Scene.Planes)
     {
         if (plane_intersect(Plane, Ray, &Distance))
@@ -242,8 +242,8 @@ bool get_first_intersection(const scene& Scene, const ray& Ray, hit_info *Hit)
             }
         }
     }
-*/
 
+/*
     std::vector<size_t> TraverseStack{};
     TraverseStack.push_back(0); // index 0 is root node(?)
 
@@ -317,7 +317,7 @@ bool get_first_intersection(const scene& Scene, const ray& Ray, hit_info *Hit)
             }
         }
     }
-
+*/
 /*
     auto& TriangleVertices = Scene.get_triangle_vertices();
     for (int i = 0; i < TriangleVertices.size(); i += 3)

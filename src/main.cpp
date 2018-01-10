@@ -58,7 +58,7 @@ std::unique_ptr<scene> create_and_setup_scene()
 
 int main()
 {
-#define QUALITY 0
+#define QUALITY 1
 
 #if QUALITY == 0
     image Image{1920, 1080};
