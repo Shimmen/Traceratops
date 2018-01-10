@@ -172,14 +172,14 @@ void render_scene(const scene& Scene, image& Image, int RaysPerPixel, int MaxRay
     printf("... 100%% done ...\n");
 }
 
-vec3 random_hemisphere(vec3 N, rng& Rng)
+vec3 random_in_unit_sphere(rng& Rng)
 {
-    // TODO: Make better version of this!
-
-    normalize(&N);
-
-    vec3 RandomOffset = vec3{ Rng.random_neg11(), Rng.random_neg11(), Rng.random_neg11() };
-    return normalize(N + RandomOffset);
+    vec3 position{};
+    do
+    {
+        position = vec3(Rng.random_neg11(), Rng.random_neg11(), Rng.random_neg11());
+    } while (length2(position) >= 1.0f);
+    return position;
 }
 
 vec3 reflect(const vec3& I, const vec3& N)
@@ -188,7 +188,7 @@ vec3 reflect(const vec3& I, const vec3& N)
     return I - N * 2.0f * dot(N, I);
 }
 
-bool get_first_intersection(const scene& Scene, const ray& Ray, hit_info *Hit)
+bool get_first_intersection(const scene& Scene, const ray& Ray, float MinT, float MaxT, hit_info *Hit)
 {
     constexpr float Infinity = std::numeric_limits<float>::infinity();
 
@@ -199,7 +199,7 @@ bool get_first_intersection(const scene& Scene, const ray& Ray, hit_info *Hit)
     {
         if (plane_intersect(Plane, Ray, &Distance))
         {
-            if (Distance > 0 && Distance < MinDistance)
+            if (Distance > MinT && Distance < MinDistance && Distance < MaxT)
             {
                 MinDistance = Distance;
 
@@ -214,7 +214,7 @@ bool get_first_intersection(const scene& Scene, const ray& Ray, hit_info *Hit)
     {
         if (plane_intersect(Disc.Plane, Ray, &Distance))
         {
-            if (Distance > 0 && Distance < MinDistance)
+            if (Distance > MinT && Distance < MinDistance && Distance < MaxT)
             {
                 Hit->Point = Ray.Origin + (Ray.Direction * Distance);
                 if (length2(Hit->Point - Disc.Plane.P) <= Disc.r * Disc.r)
@@ -232,7 +232,7 @@ bool get_first_intersection(const scene& Scene, const ray& Ray, hit_info *Hit)
     {
         if (sphere_intersect(Sphere, Ray, &Distance))
         {
-            if (Distance > 0 && Distance < MinDistance)
+            if (Distance > MinT && Distance < MinDistance && Distance < MaxT)
             {
                 MinDistance = Distance;
 
@@ -371,8 +371,6 @@ bool get_first_intersection(const scene& Scene, const ray& Ray, hit_info *Hit)
     return MinDistance != Infinity;
 }
 
-static float NormalOffsetAmount = 0.001f;
-
 vec3 trace_ray(ray Ray, const scene& Scene, rng& Rng, int Depth)
 {
     vec3 BounceAttenuation = vec3{1, 1, 1};
@@ -381,18 +379,15 @@ vec3 trace_ray(ray Ray, const scene& Scene, rng& Rng, int Depth)
     hit_info Hit{};
     for (int CurrentDepth = 0; CurrentDepth < Depth; ++CurrentDepth)
     {
-        if (get_first_intersection(Scene, Ray, &Hit))
+        if (get_first_intersection(Scene, Ray, 0.0001f, INFINITY, &Hit))
         {
             const material& Material = Scene.get_material(Hit.Material);
 
             // TODO: Use a proper light model!!!
             vec3 PerfectReflectedDirection = reflect(Ray.Direction, Hit.Normal);
-            vec3 DiffuseRoughDirection = random_hemisphere(Hit.Normal, Rng);
+            vec3 DiffuseRoughDirection = normalize(Hit.Normal + random_in_unit_sphere(Rng));
             vec3 NewRayDirection = lerp(PerfectReflectedDirection, DiffuseRoughDirection, Material.Roughness);
             normalize(&NewRayDirection);
-
-            // Offset slightly out by the normal so we aren't inside the currently hit object to begin with
-            vec3 NewRayOrigin = Hit.Point + (Hit.Normal * NormalOffsetAmount);
 
             //
             // Accumulate contribution
@@ -401,10 +396,10 @@ vec3 trace_ray(ray Ray, const scene& Scene, rng& Rng, int Depth)
             vec3 EmitColor = Material.Albedo * Material.Emittance;
             ResultColor = ResultColor + (BounceAttenuation * EmitColor);
 
-            float CosineAttenuation = fmaxf(0.0f, dot(NewRayDirection, Hit.Normal));
+            float CosineAttenuation = std::max(0.0f, dot(NewRayDirection, Hit.Normal));
             BounceAttenuation = BounceAttenuation * Material.Albedo * CosineAttenuation;
 
-            Ray.Origin = NewRayOrigin;
+            Ray.Origin = Hit.Point;
             Ray.Direction = NewRayDirection;
         }
         else
@@ -435,17 +430,13 @@ vec3 trace_ray(ray Ray, const scene& Scene, rng& Rng, int Depth)
 
 uint32_t pixel_from_color(vec3 color)
 {
-    static const uint32_t a = 0xFF;
-#if 0
     static const float gamma = 2.2f;
-#else
-    static const float gamma = 1.0f;
-#endif
     static const float gamma_pow = 1.0f / gamma;
 
-    uint32_t r = 0xFF & (uint32_t)(lroundf(powf(color.x, gamma_pow) * 255.0f));
-    uint32_t g = 0xFF & (uint32_t)(lroundf(powf(color.y, gamma_pow) * 255.0f));
-    uint32_t b = 0xFF & (uint32_t)(lroundf(powf(color.z, gamma_pow) * 255.0f));
+    uint32_t r = 0xFF & uint32_t(powf(color.x, gamma_pow) * 255.99f);
+    uint32_t g = 0xFF & uint32_t(powf(color.y, gamma_pow) * 255.99f);
+    uint32_t b = 0xFF & uint32_t(powf(color.z, gamma_pow) * 255.99f);
+    uint32_t a = 0xFF;
 
     return (a << 24) | (b << 16) | (g << 8) | (r << 0);
 }

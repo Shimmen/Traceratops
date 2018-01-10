@@ -11,15 +11,15 @@ std::unique_ptr<scene> create_and_setup_scene()
     std::unique_ptr<scene> Scene(new scene{});
 
     Scene->EnvironmentMap = std::unique_ptr<texture>(new texture{"assets/environment.hdr"});
-    Scene->EnvironmentMultiplier = 3.0f;
+    Scene->EnvironmentMultiplier = 0.8f;
 
     Scene->register_triangle_mesh("assets/lowpoly_tree.obj", vec3{0.1f, 0.6f, 3.0f});
 
-    int DiffuseRedMaterial = Scene->register_material(material{vec3{1.0, 0.1, 0.1}, 0.8});
+    int DiffuseRedMaterial = Scene->register_material(material{vec3{1.0, 0.1, 0.1}, 0.7});
     int DiffuseGreenMaterial = Scene->register_material(material{vec3{0.4, 1.0, 0.4}, 0.7});
-    int DiffuseGrayMaterial = Scene->register_material(material{vec3{0.8, 0.8, 0.8}, 0.6});
+    int DiffuseGrayMaterial = Scene->register_material(material{vec3{0.6, 0.6, 0.6}, 0.8});
     int MirrorMaterial = Scene->register_material(material{vec3{1, 1, 1}, 0.0});
-    int LightMaterial = Scene->register_material(material{vec3{1.0, 0.7, 0.7}, 1.0, 35.0});
+    int LightMaterial = Scene->register_material(material{vec3{1.0, 0.7, 0.7}, 1.0, 10.0});
 
     // Diffuse red ball
     Scene->Spheres.emplace_back(
