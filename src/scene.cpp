@@ -10,13 +10,20 @@ using namespace tracemath;
 scene::scene()
 {
     // Register default material (index 0)
-    //material DefaultMaterial{vec3{1, 0, 1}, 1.0, 1.0};
-    material DefaultMaterial{vec3{1, 1, 1}, 0.25, 0.0};
+    lambertian *DefaultMaterial = new lambertian{vec3{1, 0, 1}, 1.0f};
     register_material(DefaultMaterial);
 }
 
+scene::~scene()
+{
+    for (const material *Material: RegisteredMaterials)
+    {
+        delete Material;
+    }
+}
+
 int
-scene::register_material(const material& Material)
+scene::register_material(const material *Material)
 {
     size_t NextIndex = RegisteredMaterials.size();
     RegisteredMaterials.push_back(Material);
@@ -27,7 +34,8 @@ const material&
 scene::get_material(int Material) const
 {
     assert(Material >= 0 && Material < RegisteredMaterials.size());
-    return RegisteredMaterials[Material];
+    assert(RegisteredMaterials[Material]);
+    return *RegisteredMaterials[Material];
 }
 
 void

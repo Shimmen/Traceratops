@@ -29,14 +29,14 @@ lambertian::lambertian(const vec3& Albedo, float Emittance)
     this->EmitColor = Albedo * Emittance;
 }
 
-vec3 lambertian::brdf(const vec3& Wi, const vec3& Wo, const hit_info& Hit, rng& Rng)
+vec3 lambertian::brdf(const vec3& Wi, const vec3& Wo, const hit_info& Hit, rng& Rng) const
 {
     if (dot(Wi, Hit.Normal) <= 0.0f) return vec3{0.0f};
     if (!on_same_hemisphere(Wi, Wo, Hit.Normal)) return vec3{0.0f};
     return Albedo * (1.0f / PI);
 }
 
-bool lambertian::calculate_scattered(const ray& IncomingRay, const hit_info& Hit, rng& Rng, ray& ScatteredRay)
+bool lambertian::calculate_scattered(const ray& IncomingRay, const hit_info& Hit, rng& Rng, ray& ScatteredRay) const
 {
     // TODO: Use mathematically correct cosine sampling!
 
@@ -54,13 +54,13 @@ metal::metal(const vec3& Albedo, float Fuzz, float Emittance)
     this->EmitColor = Albedo * Emittance;
 }
 
-vec3 metal::brdf(const vec3& Wi, const vec3& Wo, const hit_info& Hit, rng& Rng)
+vec3 metal::brdf(const vec3& Wi, const vec3& Wo, const hit_info& Hit, rng& Rng) const
 {
     // TODO: Implement properly!
     return Albedo;
 }
 
-bool metal::calculate_scattered(const ray& IncomingRay, const hit_info& Hit, rng& Rng, ray& ScatteredRay)
+bool metal::calculate_scattered(const ray& IncomingRay, const hit_info& Hit, rng& Rng, ray& ScatteredRay) const
 {
     ScatteredRay.Origin = Hit.Point;
     ScatteredRay.Direction = normalize(reflect(IncomingRay.Direction, Hit.Normal) + random_in_unit_sphere(Rng) * Fuzz);

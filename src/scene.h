@@ -16,9 +16,9 @@ class scene
 public:
 
     scene();
-    ~scene() = default;
+    virtual ~scene();
 
-    int register_material(const material& Material);
+    int register_material(const material *Material);
     const material& get_material(int Material) const;
 
     void register_triangle_mesh(const std::string& ObjFileName, const tracemath::vec3& Translation);
@@ -42,7 +42,7 @@ public:
     bool BVHUpToDate = false;
     std::vector<aabb> BVHElements;
 
-    std::vector<material> RegisteredMaterials;
+    std::vector<const material *> RegisteredMaterials;
 
     std::vector<tracemath::vec3> TriangleVertices;
     std::vector<triangle_face>   TriangleFaces;

@@ -11,15 +11,15 @@ std::unique_ptr<scene> create_and_setup_scene()
     std::unique_ptr<scene> Scene(new scene{});
 
     Scene->EnvironmentMap = std::unique_ptr<texture>(new texture{"assets/environment.hdr"});
-    Scene->EnvironmentMultiplier = 0.8f;
+    Scene->EnvironmentMultiplier = 1.5f;
 
     Scene->register_triangle_mesh("assets/lowpoly_tree.obj", vec3{0.1f, 0.6f, 3.0f});
 
-    int DiffuseRedMaterial = Scene->register_material(material{vec3{1.0, 0.1, 0.1}, 0.7});
-    int DiffuseGreenMaterial = Scene->register_material(material{vec3{0.4, 1.0, 0.4}, 0.7});
-    int DiffuseGrayMaterial = Scene->register_material(material{vec3{0.6, 0.6, 0.6}, 0.8});
-    int MirrorMaterial = Scene->register_material(material{vec3{1, 1, 1}, 0.0});
-    int LightMaterial = Scene->register_material(material{vec3{1.0, 0.7, 0.7}, 1.0, 10.0});
+    int DiffuseRedMaterial = Scene->register_material(new lambertian{vec3{1.0, 0.1, 0.1}});
+    int GreenMetalMaterial = Scene->register_material(new metal{vec3{0.4, 1.0, 0.4}, 0.6f});
+    int DiffuseGrayMaterial = Scene->register_material(new lambertian{vec3{0.6, 0.6, 0.6}});
+    int MirrorMaterial = Scene->register_material(new metal{vec3{1, 1, 1}, 0.0});
+    int LightMaterial = Scene->register_material(new lambertian{vec3{1.0, 0.7, 0.7}, 10.0});
 
     // Diffuse red ball
     Scene->Spheres.emplace_back(
@@ -30,7 +30,7 @@ std::unique_ptr<scene> create_and_setup_scene()
     // Diffuse green ball
     Scene->Spheres.emplace_back(
         vec3{1.25f, -1.0f, 1.95f},
-        0.4, DiffuseGreenMaterial
+        0.4, GreenMetalMaterial
     );
 
     // Mirror ball

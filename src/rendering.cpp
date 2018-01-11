@@ -383,24 +383,39 @@ vec3 trace_ray(ray Ray, const scene& Scene, rng& Rng, int Depth)
         {
             const material& Material = Scene.get_material(Hit.Material);
 
-            // TODO: Use a proper light model!!!
+            ray Scattered{};
+            if (Material.calculate_scattered(Ray, Hit, Rng, Scattered))
+            {
+                //
+                // Accumulate contribution
+                //
+
+                ResultColor = ResultColor + (BounceAttenuation * Material.EmitColor);
+
+                float CosineAttenuation = std::max(0.0f, dot(Scattered.Direction, Hit.Normal));
+                vec3 BRDF = Material.brdf(Scattered.Direction, -Ray.Direction, Hit, Rng);
+                BounceAttenuation = BounceAttenuation * BRDF * CosineAttenuation;
+
+                // Continue from scattered
+                Ray = Scattered;
+
+            }
+            else
+            {
+                //
+                // Ray absorbed, kill this path
+                //
+                return vec3{0.0f};
+            }
+
+            /*
             vec3 PerfectReflectedDirection = reflect(Ray.Direction, Hit.Normal);
             vec3 DiffuseRoughDirection = normalize(Hit.Normal + random_in_unit_sphere(Rng));
             vec3 NewRayDirection = lerp(PerfectReflectedDirection, DiffuseRoughDirection, Material.Roughness);
             normalize(&NewRayDirection);
+            */
 
-            //
-            // Accumulate contribution
-            //
 
-            vec3 EmitColor = Material.Albedo * Material.Emittance;
-            ResultColor = ResultColor + (BounceAttenuation * EmitColor);
-
-            float CosineAttenuation = std::max(0.0f, dot(NewRayDirection, Hit.Normal));
-            BounceAttenuation = BounceAttenuation * Material.Albedo * CosineAttenuation;
-
-            Ray.Origin = Hit.Point;
-            Ray.Direction = NewRayDirection;
         }
         else
         {

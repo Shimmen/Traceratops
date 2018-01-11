@@ -13,51 +13,40 @@ struct hit_info
 
 struct material
 {
-    float Roughness;
-    float Emittance;
-
-    tracemath::vec3 Albedo;
-
-    material(tracemath::vec3 Albedo, float Roughness, float Emittance = 0.0f)
-        : Albedo(Albedo), Roughness(Roughness), Emittance(Emittance) {}
-};
-
-struct material_new
-{
     tracemath::vec3 EmitColor{};
 
-    virtual tracemath::vec3 brdf(const tracemath::vec3& Wi, const tracemath::vec3& Wo, const hit_info& Hit, tracemath::rng& Rng) = 0;
+    material() = default;
+    virtual ~material() = default;
+
+    virtual tracemath::vec3 brdf(const tracemath::vec3& Wi, const tracemath::vec3& Wo, const hit_info& Hit, tracemath::rng& Rng) const = 0;
 
     // Scatter the incoming ray and write the result into ScatteredRay together with the probability of that specific direction
     // being chosen (pdf), and return true if it scattered or false if it was absorbed.
-    virtual bool calculate_scattered(const ray& IncomingRay, const hit_info& Hit, tracemath::rng& Rng, ray& ScatteredRay/*, float& Pdf*/) = 0;
+    virtual bool calculate_scattered(const ray& IncomingRay, const hit_info& Hit, tracemath::rng& Rng, ray& ScatteredRay/*, float& Pdf*/) const = 0;
 
 };
 
-struct lambertian: material_new
+struct lambertian: material
 {
     tracemath::vec3 Albedo{};
 
-    lambertian(const tracemath::vec3& Albedo, float Emittance = 0);
+    explicit lambertian(const tracemath::vec3& Albedo, float Emittance = 0);
 
-    virtual tracemath::vec3 brdf(const tracemath::vec3& Wi, const tracemath::vec3& Wo, const hit_info& Hit, tracemath::rng& Rng);
-    virtual bool calculate_scattered(const ray& IncomingRay, const hit_info& Hit, tracemath::rng& Rng, ray& ScatteredRay/*, float& Pdf*/);
+    virtual tracemath::vec3 brdf(const tracemath::vec3& Wi, const tracemath::vec3& Wo, const hit_info& Hit, tracemath::rng& Rng) const;
+    virtual bool calculate_scattered(const ray& IncomingRay, const hit_info& Hit, tracemath::rng& Rng, ray& ScatteredRay/*, float& Pdf*/) const;
 
 };
 
-struct metal: material_new
+struct metal: material
 {
     tracemath::vec3 Albedo{};
     float Fuzz; // FIXME: totally PBR (from Peter Shirley's book)
 
     metal(const tracemath::vec3& Albedo, float Fuzz, float Emittance = 0);
 
-    virtual tracemath::vec3 brdf(const tracemath::vec3& Wi, const tracemath::vec3& Wo, const hit_info& Hit, tracemath::rng& Rng);
-    virtual bool calculate_scattered(const ray& IncomingRay, const hit_info& Hit, tracemath::rng& Rng, ray& ScatteredRay/*, float& Pdf*/);
+    virtual tracemath::vec3 brdf(const tracemath::vec3& Wi, const tracemath::vec3& Wo, const hit_info& Hit, tracemath::rng& Rng) const;
+    virtual bool calculate_scattered(const ray& IncomingRay, const hit_info& Hit, tracemath::rng& Rng, ray& ScatteredRay/*, float& Pdf*/) const;
 
 };
-
-
-
 
 #endif // TRACERATOPS_MATERIAL_H
