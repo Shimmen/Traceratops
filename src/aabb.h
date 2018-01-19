@@ -6,8 +6,8 @@
 
 struct aabb
 {
-    tracemath::vec3 Min{};
-    tracemath::vec3 Max{};
+    vec3 Min{};
+    vec3 Max{};
 
     std::vector<const triangle_face *> ContainedTriangles{};
 
@@ -15,7 +15,7 @@ struct aabb
     std::vector<size_t> Children;
     //aabb *Children[2] = {};
 
-    aabb(const tracemath::vec3& Min, const tracemath::vec3& Max) : Min(Min), Max(Max) {}
+    aabb(const vec3& Min, const vec3& Max) : Min(Min), Max(Max) {}
 
     //aabb(const tracemath::vec3& Min, const tracemath::vec3& Max) : Min(Min), Max(Max), IsLeaf(false), Children() {}
     //std::vector<aabb> Children;
@@ -31,7 +31,7 @@ bool aabb_intersection(const aabb& a, const aabb& b)
 }
 
 static inline
-bool aabb_point_intersection(const aabb& a, const tracemath::vec3& p)
+bool aabb_point_intersection(const aabb& a, const vec3& p)
 {
 #if 1
     return p.x >= a.Min.x && p.x <= a.Max.x &&
@@ -47,7 +47,7 @@ bool aabb_point_intersection(const aabb& a, const tracemath::vec3& p)
 
 
 static inline
-bool aabb_ray_intersection(const aabb& b, const tracemath::vec3& Direction, const tracemath::vec3& Origin)
+bool aabb_ray_intersection(const aabb& b, const vec3& Direction, const vec3& Origin)
 {
     // From Tavian Barnes:
     // https://tavianator.com/fast-branchless-raybounding-box-intersections-part-2-nans/

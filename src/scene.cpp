@@ -39,7 +39,7 @@ scene::get_material(int Material) const
 }
 
 void
-scene::register_triangle_mesh(const std::string& ObjFileName, const tracemath::vec3& Translation)
+scene::register_triangle_mesh(const std::string& ObjFileName, const vec3& Translation)
 {
     BVHUpToDate = false;
 
@@ -145,7 +145,7 @@ scene::register_triangle_mesh(const std::string& ObjFileName, const tracemath::v
     }
 }
 
-const std::vector<tracemath::vec3>&
+const std::vector<vec3>&
 scene::get_triangle_vertices() const
 {
     return TriangleVertices;

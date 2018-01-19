@@ -35,42 +35,13 @@ void make_test_image(image *Image)
 }
 #endif
 
-tracemath::vec3 get_jittered_primary_ray(const image& Image, int PixelX, int PixelY, rng& Rng)
-{
-    tracemath::vec3 Dir = {};
-
-    auto x = (float)PixelX;
-    auto y = (float)PixelY;
-    auto w = (float)Image.Width;
-    auto h = (float)Image.Height;
-
-    // Should be [0, 1] for an offset inside the pixel
-#if 0
-    float OffsetX = 0.5f;
-    float OffsetY = 0.5f;
-#else
-    float OffsetX = Rng.random_01();
-    float OffsetY = Rng.random_01();
-#endif
-
-    Dir.x = (x + OffsetX) / w * 2.0f - 1.0f;
-    Dir.y = (y + OffsetY) / h * 2.0f - 1.0f;
-    Dir.z = 1.0f;
-
-    // Aspect ratio adjust
-    float AspectRatio = w / h;
-    Dir.x *= AspectRatio;
-
-    normalize(&Dir);
-    return Dir;
-}
-
 vec3 tone_map_hdr_to_ldr(const vec3& Hdr)
 {
+    // TODO: Use better tonemap!!!
     return Hdr / (Hdr + vec3(1, 1, 1));
 }
 
-void render_scene(const scene& Scene, image& Image, int RaysPerPixel, int MaxRayDepth)
+void render_scene(const scene& Scene, const camera& Camera, image& Image, int RaysPerPixel, int MaxRayDepth)
 {
     if (!Scene.is_prepared_for_rendering())
     {
@@ -78,7 +49,7 @@ void render_scene(const scene& Scene, image& Image, int RaysPerPixel, int MaxRay
         return;
     }
 
-    ray Ray = {};
+    //ray Ray = {};
 
 #define USE_MULTITHREADING 0
 #if USE_MULTITHREADING
@@ -147,9 +118,10 @@ void render_scene(const scene& Scene, image& Image, int RaysPerPixel, int MaxRay
             vec3 AccumulatedHdrColor = vec3{};
             for (int i = 0; i < RaysPerPixel; ++i)
             {
-                // TODO: Make a proper camera with fov etc!
-                Ray.Origin = vec3(0, 0, -1);
-                Ray.Direction = get_jittered_primary_ray(Image, x, y, Rng);
+                // (jittered UVs)
+                float u = (x + Rng.random_01()) / Image.Width;
+                float v = (y + Rng.random_01()) / Image.Height;
+                const ray& Ray = Camera.get_ray(u, v);
 
                 vec3 Color = trace_ray(Ray, Scene, Rng, MaxRayDepth);
                 AccumulatedHdrColor = AccumulatedHdrColor + Color;
@@ -159,6 +131,11 @@ void render_scene(const scene& Scene, image& Image, int RaysPerPixel, int MaxRay
             vec3 LdrColor = tone_map_hdr_to_ldr(AccumulatedHdrColor);
 
             uint32_t Pixel = pixel_from_color(LdrColor);
+
+            // (Debug corner pixels)
+            //if (x == 0 && y == 0) Pixel = pixel_from_color(vec3{1, 0, 1});
+            //if (x == Image.Width - 1 && y == Image.Height - 1) Pixel = pixel_from_color(vec3{0, 1, 1});
+
             Image.set_pixel(x, Image.Height - y - 1, Pixel);
         }
 
@@ -170,22 +147,6 @@ void render_scene(const scene& Scene, image& Image, int RaysPerPixel, int MaxRay
 #endif
 
     printf("... 100%% done ...\n");
-}
-
-vec3 random_in_unit_sphere(rng& Rng)
-{
-    vec3 position{};
-    do
-    {
-        position = vec3(Rng.random_neg11(), Rng.random_neg11(), Rng.random_neg11());
-    } while (length2(position) >= 1.0f);
-    return position;
-}
-
-vec3 reflect(const vec3& I, const vec3& N)
-{
-    // See http://docs.gl/sl4/reflects
-    return I - N * 2.0f * dot(N, I);
 }
 
 bool get_first_intersection(const scene& Scene, const ray& Ray, float MinT, float MaxT, hit_info *Hit)
@@ -407,15 +368,6 @@ vec3 trace_ray(ray Ray, const scene& Scene, rng& Rng, int Depth)
                 //
                 return vec3{0.0f};
             }
-
-            /*
-            vec3 PerfectReflectedDirection = reflect(Ray.Direction, Hit.Normal);
-            vec3 DiffuseRoughDirection = normalize(Hit.Normal + random_in_unit_sphere(Rng));
-            vec3 NewRayDirection = lerp(PerfectReflectedDirection, DiffuseRoughDirection, Material.Roughness);
-            normalize(&NewRayDirection);
-            */
-
-
         }
         else
         {

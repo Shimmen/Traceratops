@@ -2,6 +2,7 @@
 
 #include "image.h"
 #include "scene.h"
+#include "camera.h"
 #include "rendering.h"
 
 using namespace tracemath;
@@ -13,7 +14,7 @@ std::unique_ptr<scene> create_and_setup_scene()
     Scene->EnvironmentMap = std::unique_ptr<texture>(new texture{"assets/environment.hdr"});
     Scene->EnvironmentMultiplier = 1.5f;
 
-    Scene->register_triangle_mesh("assets/lowpoly_tree.obj", vec3{0.1f, 0.6f, 3.0f});
+    //Scene->register_triangle_mesh("assets/lowpoly_tree.obj", vec3{0.1f, 0.6f, 3.0f});
 
     int DiffuseRedMaterial = Scene->register_material(new lambertian{vec3{1.0, 0.1, 0.1}});
     int GreenMetalMaterial = Scene->register_material(new metal{vec3{0.4, 1.0, 0.4}, 0.6f});
@@ -23,26 +24,26 @@ std::unique_ptr<scene> create_and_setup_scene()
 
     // Diffuse red ball
     Scene->Spheres.emplace_back(
-        vec3{0.75f, 0, 3},
+        vec3{0.75f, 0, 1},
         1.0, DiffuseRedMaterial
     );
 
     // Diffuse green ball
     Scene->Spheres.emplace_back(
-        vec3{1.25f, -1.0f, 1.95f},
+        vec3{1.25f, -1.0f, 0.0f},
         0.4, GreenMetalMaterial
     );
 
     // Mirror ball
     Scene->Spheres.emplace_back(
-        vec3{-1.1f, 0.4f, 3},
+        vec3{-1.1f, 0.4f, 2},
         0.75, MirrorMaterial
     );
 
     // Light source
     Scene->Discs.emplace_back(
-        vec3{+4.2f, -0.7f, 4.2f},
-        make_direction(-1.0f, +0.0f, -0.0f),
+        vec3{+4.2f, -0.7f, 2.2f},
+        make_direction(-1.0f, +0.0f, -0.5f),
         1.25, LightMaterial
     );
 
@@ -58,12 +59,12 @@ std::unique_ptr<scene> create_and_setup_scene()
 
 int main()
 {
-#define QUALITY 1
+#define QUALITY 2
 
 #if QUALITY == 0
     image Image{1920, 1080};
-    int RaysPerPixel = 1;//1024;
-    int RayMaxDepth = 1;
+    int RaysPerPixel = 1024;
+    int RayMaxDepth = 8;
 #elif QUALITY == 1
     image Image{720, 480};
     int RaysPerPixel = 64;
@@ -84,7 +85,9 @@ int main()
     auto Scene = create_and_setup_scene();
     Scene->prepare_for_rendering();
 
-    render_scene(*Scene, Image, RaysPerPixel, RayMaxDepth);
+    camera Camera{vec3{0, 1, -2}, vec3{0.75f, 0, 1}, vec3{0, 1, 0}, Image, 90};
+
+    render_scene(*Scene, Camera, Image, RaysPerPixel, RayMaxDepth);
 
     printf("Traceratops - rendering done, writing to file");
     Image.write_to_png(ImageFileName);

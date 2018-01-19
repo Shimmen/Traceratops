@@ -3,8 +3,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-using namespace tracemath;
-
 texture::texture(const std::string& FileName)
 {
     IsHdrTexture = static_cast<bool>(stbi_is_hdr(FileName.c_str()));
@@ -42,8 +40,7 @@ texture::~texture()
     }
 }
 
-tracemath::vec3
-texture::sample_texel_nearest(float u, float v) const
+vec3 texture::sample_texel_nearest(float u, float v) const
 {
     // Assume repeat for now
     u = u - floorf(u);
@@ -64,8 +61,7 @@ texture::sample_texel_nearest(float u, float v) const
     }
 }
 
-tracemath::vec3
-texture::sample_texel_linear(float u, float v) const
+vec3 texture::sample_texel_linear(float u, float v) const
 {
     // TODO: Implement!
     assert(false);

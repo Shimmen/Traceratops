@@ -5,28 +5,28 @@
 
 struct ray
 {
-    tracemath::vec3 Origin;
-    tracemath::vec3 Direction;
+    vec3 Origin;
+    vec3 Direction;
 };
 
 struct sphere
 {
-    tracemath::vec3 P;
+    vec3 P;
     float r;
 
     int Material;
 
-    sphere(tracemath::vec3 P, float r, int Material) : P(P), r(r), Material(Material) {}
+    sphere(vec3 P, float r, int Material) : P(P), r(r), Material(Material) {}
 };
 
 struct plane
 {
-    tracemath::vec3 P;
-    tracemath::vec3 N;
+    vec3 P;
+    vec3 N;
 
     int Material;
 
-    plane(tracemath::vec3 P, tracemath::vec3 N, int Material) : P(P), N(N), Material(Material) {}
+    plane(vec3 P, vec3 N, int Material) : P(P), N(N), Material(Material) {}
 };
 
 struct disc
@@ -34,7 +34,7 @@ struct disc
     plane Plane;
     float r;
 
-    disc(tracemath::vec3 P, tracemath::vec3 N, float r, int Material) : Plane(P, N, Material), r(r) {}
+    disc(vec3 P, vec3 N, float r, int Material) : Plane(P, N, Material), r(r) {}
 };
 
 

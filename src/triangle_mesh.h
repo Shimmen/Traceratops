@@ -5,9 +5,9 @@
 
 struct triangle_face
 {
-    tracemath::vec3 Vertices[3];
-    tracemath::vec3 Normals[3];
-    tracemath::vec2 UVs[3];
+    vec3 Vertices[3];
+    vec3 Normals[3];
+    vec2 UVs[3];
 
     int Material;
 };
