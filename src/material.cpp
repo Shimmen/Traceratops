@@ -7,16 +7,6 @@ static bool on_same_hemisphere(const vec3& Wi, const vec3& Wo, const vec3& N)
     return copysign(1.0f, dot(Wo, N)) == copysign(1.0f, dot(Wi, N));
 }
 
-static vec3 random_in_unit_sphere(rng& Rng)
-{
-    vec3 position{};
-    do
-    {
-        position = vec3(Rng.random_neg11(), Rng.random_neg11(), Rng.random_neg11());
-    } while (length2(position) >= 1.0f);
-    return position;
-}
-
 static vec3 reflect(const vec3& I, const vec3& N)
 {
     return I - N * 2.0f * dot(N, I);
@@ -41,7 +31,7 @@ bool lambertian::calculate_scattered(const ray& IncomingRay, const hit_info& Hit
     // TODO: Use mathematically correct cosine sampling!
 
     ScatteredRay.Origin = Hit.Point;
-    ScatteredRay.Direction = normalize(Hit.Normal + random_in_unit_sphere(Rng));
+    ScatteredRay.Direction = normalize(Hit.Normal + Rng.random_in_unit_sphere());
     return true;
 }
 
@@ -63,6 +53,6 @@ vec3 metal::brdf(const vec3& Wi, const vec3& Wo, const hit_info& Hit, rng& Rng) 
 bool metal::calculate_scattered(const ray& IncomingRay, const hit_info& Hit, rng& Rng, ray& ScatteredRay) const
 {
     ScatteredRay.Origin = Hit.Point;
-    ScatteredRay.Direction = normalize(reflect(IncomingRay.Direction, Hit.Normal) + random_in_unit_sphere(Rng) * Fuzz);
+    ScatteredRay.Direction = normalize(reflect(IncomingRay.Direction, Hit.Normal) + Rng.random_in_unit_sphere() * Fuzz);
     return dot(ScatteredRay.Direction, Hit.Normal) > 0.0f;
 }

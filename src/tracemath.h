@@ -251,6 +251,27 @@ public:
         return uniform_neg11_dist(engine);
     }
 
+    // (on the xy-plane)
+    vec3 random_in_unit_disk()
+    {
+        vec3 position{};
+        do
+        {
+            position = vec3(random_neg11(), random_neg11(), 0.0f);
+        } while (length2(position) >= 1.0f);
+        return position;
+    }
+
+    vec3 random_in_unit_sphere()
+    {
+        vec3 position{};
+        do
+        {
+            position = vec3(random_neg11(), random_neg11(), random_neg11());
+        } while (length2(position) >= 1.0f);
+        return position;
+    }
+
 private:
 
     std::default_random_engine engine;

@@ -54,12 +54,18 @@ std::unique_ptr<scene> create_and_setup_scene()
         10.0f, DiffuseGrayMaterial
     );
 
+    // Out of focus ball
+    Scene->Spheres.emplace_back(
+            vec3{-0.4f, 0.75f, -1.7f},
+            0.20f, DiffuseRedMaterial
+    );
+
     return Scene;
 }
 
 int main()
 {
-#define QUALITY 2
+#define QUALITY 0
 
 #if QUALITY == 0
     image Image{1920, 1080};
@@ -85,7 +91,7 @@ int main()
     auto Scene = create_and_setup_scene();
     Scene->prepare_for_rendering();
 
-    camera Camera{vec3{0, 1, -2}, vec3{0.75f, 0, 1}, vec3{0, 1, 0}, Image, 90};
+    camera Camera{vec3{0, 1, -2}, vec3{0.75f, 0, 1}, vec3{0, 1, 0}, Image, 90, 0.3f};
 
     render_scene(*Scene, Camera, Image, RaysPerPixel, RayMaxDepth);
 

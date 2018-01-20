@@ -5,8 +5,8 @@
 
 struct camera
 {
-    camera(vec3 Origin, vec3 LookAt, vec3 Up, const image& Image, float VFov)
-            : Origin(Origin), LookAt(LookAt)
+    camera(vec3 Origin, vec3 LookAt, const vec3& Up, const image& Image, float VFov, float ApertureSize)
+            : Origin(Origin), LookAt(LookAt), LensRadius(ApertureSize / 2.0f), FocusDistance(length(Origin - LookAt))
     {
         float AspectRatio = float(Image.Width) / float(Image.Height);
         float Theta = VFov * tracemath::PI / 180.0f;
@@ -16,21 +16,26 @@ struct camera
 
         // Create camera basis (note that the camera looks down +W)
         // I.e, I use a LEFT HANDED COORDINATE SYSTEM!!! Don't forget this!
-        vec3 W = normalize(LookAt - Origin);
-        vec3 U = normalize(cross(Up, W));
-        vec3 V = normalize(cross(W, U));
+        W = normalize(LookAt - Origin);
+        U = normalize(cross(Up, W));
+        V = normalize(cross(W, U));
 
-        LowerLeft = Origin - HalfWidth * U - HalfHeight * V + W;
-        Horizontal = 2.0f * HalfWidth * U;
-        Vertical   = 2.0f * HalfHeight * V;
+        LowerLeft = Origin - HalfWidth * FocusDistance * U - HalfHeight * FocusDistance * V + FocusDistance * W;
+        Horizontal = 2.0f * HalfWidth * FocusDistance * U;
+        Vertical   = 2.0f * HalfHeight * FocusDistance * V;
     }
     ~camera() = default;
 
-    ray get_ray(float u, float v) const
+    ray get_ray(float u, float v, rng& Rng) const
     {
         ray Ray{};
-        Ray.Origin = Origin;
-        Ray.Direction = normalize(LowerLeft + Horizontal * u + Vertical * v - Origin);
+
+        vec3 LensSample = LensRadius * Rng.random_in_unit_disk();
+        vec3 Offset = LensSample.x * U + LensSample.y * V;
+
+        Ray.Origin = Origin + Offset;
+        Ray.Direction = normalize(LowerLeft + Horizontal * u + Vertical * v - Origin - Offset);
+
         return Ray;
     }
 
@@ -38,6 +43,14 @@ private:
 
     vec3 Origin;
     vec3 LookAt;
+
+    float LensRadius;
+    float FocusDistance;
+
+    // Camera view basis
+    vec3 U{};
+    vec3 V{};
+    vec3 W{};
 
     vec3 LowerLeft{};
     vec3 Horizontal{};

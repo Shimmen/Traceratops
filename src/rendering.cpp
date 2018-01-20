@@ -121,7 +121,7 @@ void render_scene(const scene& Scene, const camera& Camera, image& Image, int Ra
                 // (jittered UVs)
                 float u = (x + Rng.random_01()) / Image.Width;
                 float v = (y + Rng.random_01()) / Image.Height;
-                const ray& Ray = Camera.get_ray(u, v);
+                const ray& Ray = Camera.get_ray(u, v, Rng);
 
                 vec3 Color = trace_ray(Ray, Scene, Rng, MaxRayDepth);
                 AccumulatedHdrColor = AccumulatedHdrColor + Color;
