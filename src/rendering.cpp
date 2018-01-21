@@ -152,55 +152,15 @@ void render_scene(const scene& Scene, const camera& Camera, image& Image, int Ra
 bool get_first_intersection(const scene& Scene, const ray& Ray, float MinT, float MaxT, hit_info *Hit)
 {
     constexpr float Infinity = std::numeric_limits<float>::infinity();
-
     float MinDistance = Infinity;
-    float Distance;
 
-    for (auto& Plane : Scene.Planes)
+    hit_info CurrentHit{};
+    for (auto& Hitable: Scene.Hitables)
     {
-        if (plane_intersect(Plane, Ray, &Distance))
+        if (Hitable->intersect(Ray, MinT, MaxT, CurrentHit) && CurrentHit.Distance < MinDistance)
         {
-            if (Distance > MinT && Distance < MinDistance && Distance < MaxT)
-            {
-                MinDistance = Distance;
-
-                Hit->Point = Ray.Origin + (Ray.Direction * Distance);
-                Hit->Normal = Plane.N;
-                Hit->Material = Plane.Material;
-            }
-        }
-    }
-
-    for (auto& Disc : Scene.Discs)
-    {
-        if (plane_intersect(Disc.Plane, Ray, &Distance))
-        {
-            if (Distance > MinT && Distance < MinDistance && Distance < MaxT)
-            {
-                Hit->Point = Ray.Origin + (Ray.Direction * Distance);
-                if (length2(Hit->Point - Disc.Plane.P) <= Disc.r * Disc.r)
-                {
-                    MinDistance = Distance;
-
-                    Hit->Normal = Disc.Plane.N;
-                    Hit->Material = Disc.Plane.Material;
-                }
-            }
-        }
-    }
-
-    for (auto& Sphere : Scene.Spheres)
-    {
-        if (sphere_intersect(Sphere, Ray, &Distance))
-        {
-            if (Distance > MinT && Distance < MinDistance && Distance < MaxT)
-            {
-                MinDistance = Distance;
-
-                Hit->Point = Ray.Origin + (Ray.Direction * Distance);
-                Hit->Normal = normalize(Hit->Point - Sphere.P);
-                Hit->Material = Sphere.Material;
-            }
+            *Hit = CurrentHit;
+            MinDistance = CurrentHit.Distance;
         }
     }
 

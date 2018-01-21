@@ -4,13 +4,6 @@
 #include "tracemath.h"
 #include "geometry.h"
 
-struct hit_info
-{
-    vec3 Point;
-    vec3 Normal;
-    int  Material;
-};
-
 struct material
 {
     vec3 EmitColor{};

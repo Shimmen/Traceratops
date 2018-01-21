@@ -2,6 +2,7 @@
 #define TRACERATOPS_GEOMETRY_H
 
 #include "tracemath.h"
+#include "aabb.h"
 
 struct ray
 {
@@ -9,36 +10,45 @@ struct ray
     vec3 Direction;
 };
 
-struct sphere
+struct hit_info
 {
-    vec3 P;
-    float r;
-
+    vec3 Point;
+    vec3 Normal;
     int Material;
-
-    sphere(vec3 P, float r, int Material) : P(P), r(r), Material(Material) {}
+    float Distance;
 };
 
-struct plane
+struct hitable
 {
+    explicit hitable(int Material) : Material(Material) {}
+
+    virtual bool intersect(const ray& Ray, float TMin, float TMax, hit_info& Hit) const = 0;
+    //virtual const aabb& get_aabb() const = 0;
+
+    int Material;
+};
+
+struct sphere: public hitable
+{
+    sphere(vec3 C, float r, int Material) : hitable(Material), C(C), r(r) {}
+
+    virtual bool intersect(const ray& Ray, float TMin, float TMax, hit_info& Hit) const;
+    //virtual const aabb& get_aabb() const;
+
+    vec3 C;
+    float r;
+};
+
+struct disc: public hitable
+{
+    disc(vec3 P, vec3 N, float r, int Material) : hitable(Material), P(P), N(N), r(r) {}
+
+    virtual bool intersect(const ray& Ray, float TMin, float TMax, hit_info& Hit) const;
+    //virtual const aabb& get_aabb() const;
+
     vec3 P;
     vec3 N;
-
-    int Material;
-
-    plane(vec3 P, vec3 N, int Material) : P(P), N(N), Material(Material) {}
-};
-
-struct disc
-{
-    plane Plane;
     float r;
-
-    disc(vec3 P, vec3 N, float r, int Material) : Plane(P, N, Material), r(r) {}
 };
-
-
-int sphere_intersect(const sphere& Sphere, const ray& Ray, float *t);
-int plane_intersect(const plane& Plane, const ray& Ray, float *t);
 
 #endif // TRACERATOPS_GEOMETRY_H

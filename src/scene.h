@@ -27,9 +27,7 @@ public:
     void prepare_for_rendering();
     bool is_prepared_for_rendering() const;
 
-    std::vector<disc> Discs;
-    std::vector<plane> Planes;
-    std::vector<sphere> Spheres;
+    std::vector<hitable *> Hitables;
 
     // (sphere map)
     std::unique_ptr<texture> EnvironmentMap;

@@ -1,50 +1,71 @@
 #include "geometry.h"
 
-using namespace tracemath;
-
 static const float IntersectionTolerance = 0.0001f;
 
-int sphere_intersect(const sphere& Sphere, const ray& Ray, float *t)
+bool sphere::intersect(const ray &Ray, float TMin, float TMax, hit_info& Hit) const
 {
-    vec3 RelOrigin = Ray.Origin - Sphere.P;
+    vec3 RelOrigin = Ray.Origin - C;
 
     // (quadratic formula)
     float a = dot(Ray.Direction, Ray.Direction);
     float b = 2.0f * dot(Ray.Direction, RelOrigin);
-    float c = dot(RelOrigin, RelOrigin) - (Sphere.r * Sphere.r);
+    float c = dot(RelOrigin, RelOrigin) - (r * r);
 
     float Denom = 2.0f * a;
     float SqrtInner = b * b - 4.0f * a * c;
 
-    if (SqrtInner < 0) return 0;
-    if (Denom == 0) return 0;
+    if (SqrtInner < 0) return false;
+    if (Denom == 0) return false;
 
     float RootTerm = sqrtf(SqrtInner);
-    if (RootTerm < IntersectionTolerance) return 0;
+    if (RootTerm < IntersectionTolerance) return false;
 
     float tp = (-b + RootTerm) / Denom;
     float tn = (-b - RootTerm) / Denom;
 
     // Select closest distance (that is greater than zero)
-    *t = tp;
+    float t = tp;
     if (tn > 0 && tn < tp)
     {
-        *t = tn;
+        t = tn;
     }
 
-    return *t > 0;
+    if (t >= TMin && t <= TMax)
+    {
+        Hit.Distance = t;
+        Hit.Point = Ray.Origin + t * Ray.Direction;
+        Hit.Normal = normalize(Hit.Point - C);
+        Hit.Material = Material;
+        return true;
+    }
+
+    return false;
 }
 
-int plane_intersect(const plane& Plane, const ray& Ray, float *t)
+bool disc::intersect(const ray &Ray, float TMin, float TMax, hit_info &Hit) const
 {
-    float Denominator = dot(Plane.N, Ray.Direction);
+    float Denominator = dot(N, Ray.Direction);
     if (fabsf(Denominator) < IntersectionTolerance) return 0;
 
     // Uni-directional (backface culling)
-    if (Denominator > 0) return 0;
+    // TODO: Actually this sort of breaks occlusion...
+    if (Denominator > 0) return false;
 
-    vec3 ToPlaneCenter = Plane.P - Ray.Origin;
+    vec3 ToPlaneCenter = P - Ray.Origin;
 
-    *t = dot(ToPlaneCenter, Plane.N) / Denominator;
-    return *t > 0.0f;
+    float t = dot(ToPlaneCenter, N) / Denominator;
+    if (t >= TMin && t <= TMax)
+    {
+        Hit.Distance = t;
+        Hit.Point = Ray.Origin + t * Ray.Direction;
+
+        if (length2(Hit.Point - P) <= (r * r))
+        {
+            Hit.Normal = N;
+            Hit.Material = Material;
+            return true;
+        }
+    }
+
+    return false;
 }

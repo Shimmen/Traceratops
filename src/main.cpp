@@ -23,49 +23,49 @@ std::unique_ptr<scene> create_and_setup_scene()
     int LightMaterial = Scene->register_material(new lambertian{vec3{1.0, 0.7, 0.7}, 10.0});
 
     // Diffuse red ball
-    Scene->Spheres.emplace_back(
+    Scene->Hitables.emplace_back(new sphere{
         vec3{0.75f, 0, 1},
         1.0, DiffuseRedMaterial
-    );
+    });
 
     // Diffuse green ball
-    Scene->Spheres.emplace_back(
+    Scene->Hitables.emplace_back(new sphere{
         vec3{1.25f, -1.0f, 0.0f},
         0.4, GreenMetalMaterial
-    );
+    });
 
     // Mirror ball
-    Scene->Spheres.emplace_back(
+    Scene->Hitables.emplace_back(new sphere{
         vec3{-1.1f, 0.4f, 2},
         0.75, MirrorMaterial
-    );
+    });
 
     // Light source
-    Scene->Discs.emplace_back(
+    Scene->Hitables.emplace_back(new disc{
         vec3{+4.2f, -0.7f, 2.2f},
         make_direction(-1.0f, +0.0f, -0.5f),
         1.25, LightMaterial
-    );
+    });
 
     // Floor plane
-    Scene->Discs.emplace_back(
+    Scene->Hitables.emplace_back(new disc{
         vec3{0, -1.0f, 0},
         make_direction(0, 1.0f, 0),
         10.0f, DiffuseGrayMaterial
-    );
+    });
 
     // Out of focus ball
-    Scene->Spheres.emplace_back(
-            vec3{-0.4f, 0.75f, -1.7f},
-            0.20f, DiffuseRedMaterial
-    );
+    Scene->Hitables.emplace_back(new sphere{
+        vec3{-0.4f, 0.75f, -1.7f},
+        0.20f, DiffuseRedMaterial
+    });
 
     return Scene;
 }
 
 int main()
 {
-#define QUALITY 0
+#define QUALITY 2
 
 #if QUALITY == 0
     image Image{1920, 1080};
@@ -91,7 +91,8 @@ int main()
     auto Scene = create_and_setup_scene();
     Scene->prepare_for_rendering();
 
-    camera Camera{vec3{0, 1, -2}, vec3{0.75f, 0, 1}, vec3{0, 1, 0}, Image, 90, 0.3f};
+    float ApertureSize = 0.3f;
+    camera Camera{vec3{0, 1, -2}, vec3{0.75f, 0, 1}, vec3{0, 1, 0}, Image, 90, ApertureSize};
 
     render_scene(*Scene, Camera, Image, RaysPerPixel, RayMaxDepth);
 
