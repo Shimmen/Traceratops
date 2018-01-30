@@ -16,16 +16,17 @@ std::unique_ptr<scene> create_and_setup_scene()
 
     //Scene->register_triangle_mesh("assets/lowpoly_tree.obj", vec3{0.1f, 0.6f, 3.0f});
 
-    int DiffuseRedMaterial = Scene->register_material(new lambertian{vec3{1.0, 0.1, 0.1}});
-    int GreenMetalMaterial = Scene->register_material(new metal{vec3{0.4, 1.0, 0.4}, 0.6f});
+    int DiffuseRedMaterial  = Scene->register_material(new lambertian{vec3{1.0, 0.1, 0.1}});
+    int GreenMetalMaterial  = Scene->register_material(new metal{vec3{0.4, 1.0, 0.4}, 0.2f});
     int DiffuseGrayMaterial = Scene->register_material(new lambertian{vec3{0.6, 0.6, 0.6}});
-    int MirrorMaterial = Scene->register_material(new metal{vec3{1, 1, 1}, 0.0});
-    int LightMaterial = Scene->register_material(new lambertian{vec3{1.0, 0.7, 0.7}, 10.0});
+    int MirrorMaterial      = Scene->register_material(new metal{vec3{1, 1, 1}, 0.0});
+    int ClearGlassMaterial  = Scene->register_material(new dielectric{1.5f});
+    int LightMaterial       = Scene->register_material(new lambertian{vec3{1.0, 0.7, 0.7}, 10.0});
 
     // Diffuse red ball
     Scene->Hitables.emplace_back(new sphere{
         vec3{0.75f, 0, 1},
-        1.0, DiffuseRedMaterial
+        1.0, ClearGlassMaterial//DiffuseRedMaterial
     });
 
     // Diffuse green ball
@@ -59,7 +60,13 @@ std::unique_ptr<scene> create_and_setup_scene()
         vec3{-0.4f, 0.75f, -1.7f},
         0.20f, DiffuseRedMaterial
     });
-
+/*
+    // Glass sphere
+    Scene->Hitables.emplace_back(new sphere{
+        vec3{0.25f, 0.75f, -0.7f},
+        0.75f, ClearGlassMaterial
+    });
+*/
     return Scene;
 }
 
@@ -78,7 +85,7 @@ int main()
 #elif QUALITY == 2
     image Image{288, 196};
     int RaysPerPixel = 1024;
-    int RayMaxDepth = 4;
+    int RayMaxDepth = 8;
 #elif QUALITY == 3
     image Image{288, 196};
     int RaysPerPixel = 16;
@@ -91,7 +98,7 @@ int main()
     auto Scene = create_and_setup_scene();
     Scene->prepare_for_rendering();
 
-    float ApertureSize = 0.3f;
+    float ApertureSize = 0;//.15f;
     camera Camera{vec3{0, 1, -2}, vec3{0.75f, 0, 1}, vec3{0, 1, 0}, Image, 90, ApertureSize};
 
     render_scene(*Scene, Camera, Image, RaysPerPixel, RayMaxDepth);

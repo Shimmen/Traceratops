@@ -17,7 +17,7 @@ bool sphere::intersect(const ray &Ray, float TMin, float TMax, hit_info& Hit) co
     if (SqrtInner < 0) return false;
     if (Denom == 0) return false;
 
-    float RootTerm = sqrtf(SqrtInner);
+    float RootTerm = sqrt(SqrtInner);
     if (RootTerm < IntersectionTolerance) return false;
 
     float tp = (-b + RootTerm) / Denom;
@@ -25,7 +25,7 @@ bool sphere::intersect(const ray &Ray, float TMin, float TMax, hit_info& Hit) co
 
     // Select closest distance (that is greater than zero)
     float t = tp;
-    if (tn > 0 && tn < tp)
+    if (tn >= TMin && tn < tp)
     {
         t = tn;
     }

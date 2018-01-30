@@ -49,8 +49,6 @@ void render_scene(const scene& Scene, const camera& Camera, image& Image, int Ra
         return;
     }
 
-    //ray Ray = {};
-
 #define USE_MULTITHREADING 0
 #if USE_MULTITHREADING
 
@@ -131,11 +129,6 @@ void render_scene(const scene& Scene, const camera& Camera, image& Image, int Ra
             vec3 LdrColor = tone_map_hdr_to_ldr(AccumulatedHdrColor);
 
             uint32_t Pixel = pixel_from_color(LdrColor);
-
-            // (Debug corner pixels)
-            //if (x == 0 && y == 0) Pixel = pixel_from_color(vec3{1, 0, 1});
-            //if (x == Image.Width - 1 && y == Image.Height - 1) Pixel = pixel_from_color(vec3{0, 1, 1});
-
             Image.set_pixel(x, Image.Height - y - 1, Pixel);
         }
 
@@ -305,7 +298,9 @@ vec3 trace_ray(ray Ray, const scene& Scene, rng& Rng, int Depth)
             const material& Material = Scene.get_material(Hit.Material);
 
             ray Scattered{};
-            if (Material.calculate_scattered(Ray, Hit, Rng, Scattered))
+            float PDF;
+
+            if (Material.calculate_scattered(Ray, Hit, Rng, Scattered, PDF))
             {
                 //
                 // Accumulate contribution
@@ -313,9 +308,10 @@ vec3 trace_ray(ray Ray, const scene& Scene, rng& Rng, int Depth)
 
                 ResultColor = ResultColor + (BounceAttenuation * Material.EmitColor);
 
-                float CosineAttenuation = std::max(0.0f, dot(Scattered.Direction, Hit.Normal));
+                // TODO: Add cosine back!!!
+                float CosineAttenuation = 1.0f;//std::max(0.0f, dot(Scattered.Direction, Hit.Normal));
                 vec3 BRDF = Material.brdf(Scattered.Direction, -Ray.Direction, Hit, Rng);
-                BounceAttenuation = BounceAttenuation * BRDF * CosineAttenuation;
+                BounceAttenuation = BounceAttenuation * BRDF * CosineAttenuation / PDF;
 
                 // Continue from scattered
                 Ray = Scattered;
