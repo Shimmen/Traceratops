@@ -98,7 +98,7 @@ int main()
     auto Scene = create_and_setup_scene();
     Scene->prepare_for_rendering();
 
-    float ApertureSize = 0;//.15f;
+    float ApertureSize = 0.25f;
     camera Camera{vec3{0, 1, -2}, vec3{0.75f, 0, 1}, vec3{0, 1, 0}, Image, 90, ApertureSize};
 
     render_scene(*Scene, Camera, Image, RaysPerPixel, RayMaxDepth);

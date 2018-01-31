@@ -57,7 +57,7 @@ vec3 lambertian::brdf(const vec3& Wi, const vec3& Wo, const hit_info& Hit, rng& 
     return Albedo / tracemath::PI;
 }
 
-bool lambertian::calculate_scattered(const ray& IncomingRay, const hit_info& Hit, rng& Rng, ray& ScatteredRay, float& Pdf) const
+bool lambertian::calculate_scattered(const ray& IncomingRay, hit_info& Hit, rng& Rng, ray& ScatteredRay, float& Pdf) const
 {
     ScatteredRay.Origin = Hit.Point;
 
@@ -87,7 +87,7 @@ vec3 metal::brdf(const vec3& Wi, const vec3& Wo, const hit_info& Hit, rng& Rng) 
     return Albedo / std::max(0.001f, dot(Wo, Hit.Normal));
 }
 
-bool metal::calculate_scattered(const ray& IncomingRay, const hit_info& Hit, rng& Rng, ray& ScatteredRay, float& Pdf) const
+bool metal::calculate_scattered(const ray& IncomingRay, hit_info& Hit, rng& Rng, ray& ScatteredRay, float& Pdf) const
 {
     ScatteredRay.Origin = Hit.Point;
     ScatteredRay.Direction = normalize(reflect(IncomingRay.Direction, Hit.Normal) + Rng.random_in_unit_sphere() * Fuzz);
@@ -105,7 +105,7 @@ vec3 dielectric::brdf(const vec3& Wi, const vec3& Wo, const hit_info& Hit, rng& 
     return vec3{1, 1, 1} / std::max(0.001f, dot(Wo, Hit.Normal));
 }
 
-bool dielectric::calculate_scattered(const ray& IncomingRay, const hit_info& Hit, rng& Rng, ray& ScatteredRay, float& Pdf) const
+bool dielectric::calculate_scattered(const ray& IncomingRay, hit_info& Hit, rng& Rng, ray& ScatteredRay, float& Pdf) const
 {
     ScatteredRay.Origin = Hit.Point;
 
