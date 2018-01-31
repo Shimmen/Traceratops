@@ -308,8 +308,7 @@ vec3 trace_ray(ray Ray, const scene& Scene, rng& Rng, int Depth)
 
                 ResultColor = ResultColor + (BounceAttenuation * Material.EmitColor);
 
-                // TODO: Add cosine back!!!
-                float CosineAttenuation = 1.0f;//std::max(0.0f, dot(Scattered.Direction, Hit.Normal));
+                float CosineAttenuation = std::abs(dot(Scattered.Direction, Hit.Normal));
                 vec3 BRDF = Material.brdf(Scattered.Direction, -Ray.Direction, Hit, Rng);
                 BounceAttenuation = BounceAttenuation * BRDF * CosineAttenuation / PDF;
 

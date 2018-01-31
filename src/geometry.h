@@ -13,7 +13,7 @@ struct ray
 struct hit_info
 {
     vec3 Point;
-    vec3 Normal;
+    mutable vec3 Normal;
     int Material;
     float Distance;
 };

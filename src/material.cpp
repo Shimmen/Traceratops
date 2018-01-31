@@ -102,9 +102,7 @@ vec3 dielectric::brdf(const vec3& Wi, const vec3& Wo, const hit_info& Hit, rng& 
     // surface (as this one) dot(Wo, N) == dot(Wi, N). For full information and discussion see links:
     //   https://www.reddit.com/r/pathtracing/comments/566fs4/trying_to_understand_the_cosine_term/
     //   https://www.gamedev.net/forums/topic/657520-cosine-term-in-rendering-equation/
-
-    // TODO?!
-    return vec3{1, 1, 1};// / std::max(0.001f, dot(Wo, Hit.Normal));
+    return vec3{1, 1, 1} / std::max(0.001f, dot(Wo, Hit.Normal));
 }
 
 bool dielectric::calculate_scattered(const ray& IncomingRay, const hit_info& Hit, rng& Rng, ray& ScatteredRay, float& Pdf) const
@@ -117,18 +115,18 @@ bool dielectric::calculate_scattered(const ray& IncomingRay, const hit_info& Hit
 
     if (dot(IncomingRay.Direction, Hit.Normal) > 0)
     {
-        // Ray is going in into the material, so swap the normal to point in the same hemisphere
+        // Ray is going *out of the material*, so swap the normal to point in the same hemisphere
         OutwardNormal = -Hit.Normal;
         NiOverNt = IndexOfRefraction;
 
-        // TODO: Which one?!
+        // TODO: Which one (is better)?! They both seem very similar in terms of result.
         Cosine = IndexOfRefraction * dot(IncomingRay.Direction, Hit.Normal);
         //Cosine = dot(IncomingRay.Direction, Hit.Normal);
         //Cosine = sqrt(1 - IndexOfRefraction*IndexOfRefraction * (1 - Cosine*Cosine));
     }
     else
     {
-        // We are on the inside of the surface, going out into *air*, so invert the refraction index
+        // We are in air going to the inside of the volume, so invert the refraction index (normal is valid)
         OutwardNormal = Hit.Normal;
         NiOverNt = 1.0f / IndexOfRefraction;
         Cosine = -dot(IncomingRay.Direction, Hit.Normal);
@@ -157,8 +155,10 @@ bool dielectric::calculate_scattered(const ray& IncomingRay, const hit_info& Hit
         ScatteredRay.Direction = Refracted;
     }
 
-    // TODO: Correct? Even for refraction?
     Pdf = 1.0f;
+
+    // Swap the normal for evaluating the BRDF
+    Hit.Normal = OutwardNormal;
 
     return true;
 }
