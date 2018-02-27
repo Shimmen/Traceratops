@@ -9,18 +9,24 @@ struct aabb
     vec3 Min{};
     vec3 Max{};
 
-    std::vector<const triangle_face *> ContainedTriangles{};
-
-    //bool IsLeaf = false;
-    std::vector<size_t> Children;
-    //aabb *Children[2] = {};
-
+    aabb() {}
     aabb(const vec3& Min, const vec3& Max) : Min(Min), Max(Max) {}
 
-    //aabb(const tracemath::vec3& Min, const tracemath::vec3& Max) : Min(Min), Max(Max), IsLeaf(false), Children() {}
-    //std::vector<aabb> Children;
-    //void add_child(const aabb& Child) { Children.push_back(Child); }
 };
+
+static inline
+aabb aabb_enclosing(const aabb *AABBs, size_t Count)
+{
+    assert(AABBs != nullptr && Count > 0);
+
+    aabb Enclosing = AABBs[0];
+    for (size_t i = 1; i < Count; ++i)
+    {
+        min(&Enclosing.Min, AABBs[i].Min);
+        max(&Enclosing.Max, AABBs[i].Max);
+    }
+    return Enclosing;
+}
 
 static inline
 bool aabb_intersection(const aabb& a, const aabb& b)

@@ -221,6 +221,64 @@ vec3 max_and_zeroes(const vec3& a)
 }
 
 ///////////////////////////////////////////////////////////////
+// general purpose geometrical math
+
+static bool on_same_hemisphere(const vec3& Wi, const vec3& Wo, const vec3& N)
+{
+    return copysign(1.0f, dot(Wo, N)) == copysign(1.0f, dot(Wi, N));
+}
+
+static vec3 reflect(const vec3& I, const vec3& N)
+{
+    return I - N * 2.0f * dot(N, I);
+}
+
+static bool refract(const vec3& I, const vec3& N, float NiOverNt, vec3& Refracted)
+{
+    // From: https://en.wikipedia.org/wiki/Snell%27s_law#Vector_form
+
+    float c = -dot(I, N);
+    float r = NiOverNt;
+
+    float Discriminant = 1.0f - r*r * (1.0f - c*c);
+    if (Discriminant > 0)
+    {
+        Refracted = r*I + (r*c - sqrt(Discriminant)) * N;
+        return true;
+    }
+    else
+    {
+        // Total internal reflection
+        return false;
+    }
+}
+
+static float schlick_fresnell(float Cosine, float IndexOfRefraction)
+{
+    // From: https://en.wikipedia.org/wiki/Schlick%27s_approximation
+
+    // We always assume that we go between some material and air (or actually vacuum), or the other way around
+    constexpr float Air = 1.0f;
+
+    float R0 = (Air - IndexOfRefraction) / (Air + IndexOfRefraction);
+    R0 = R0 * R0;
+
+    return R0 + (1.0f - R0) * powf(1.0f - Cosine, 5.0f);
+}
+
+static vec3 perpendicular(const vec3& Vector)
+{
+    if (std::abs(Vector.x) < std::abs(Vector.y))
+    {
+        return vec3{0.0f, -Vector.z, Vector.y};
+    }
+    else
+    {
+        return vec3{-Vector.z, 0.0f, Vector.x};
+    }
+}
+
+///////////////////////////////////////////////////////////////
 // random
 
 class rng
@@ -270,6 +328,13 @@ public:
             position = vec3(random_neg11(), random_neg11(), random_neg11());
         } while (length2(position) >= 1.0f);
         return position;
+    }
+
+    // NOTE: Only use on the main thread!
+    static rng& global_rng()
+    {
+        static rng Rng{};
+        return Rng;
     }
 
 private:

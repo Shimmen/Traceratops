@@ -9,6 +9,7 @@
 #include "geometry.h"
 #include "material.h"
 #include "triangle_mesh.h"
+#include "bvh.h"
 
 
 class scene
@@ -28,17 +29,11 @@ public:
     bool is_prepared_for_rendering() const;
 
     std::vector<hitable *> Hitables;
+    bvh_node *BVHRootNode;
 
     // (sphere map)
     std::unique_ptr<texture> EnvironmentMap;
     float EnvironmentMultiplier;
-
-//private:
-
-    void assemble_bvh(int LeafTriangleMaxCount, int MaxDepth);
-
-    bool BVHUpToDate = false;
-    std::vector<aabb> BVHElements;
 
     std::vector<const material *> RegisteredMaterials;
 

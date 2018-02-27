@@ -42,6 +42,14 @@ bool sphere::intersect(const ray &Ray, float TMin, float TMax, hit_info& Hit) co
     return false;
 }
 
+bool sphere::get_aabb(aabb& AABB) const
+{
+
+    AABB.Min = C - vec3{r, r, r};
+    AABB.Max = C + vec3{r, r, r};
+    return true;
+}
+
 bool disc::intersect(const ray &Ray, float TMin, float TMax, hit_info &Hit) const
 {
     float Denominator = dot(N, Ray.Direction);
@@ -68,4 +76,21 @@ bool disc::intersect(const ray &Ray, float TMin, float TMax, hit_info &Hit) cons
     }
 
     return false;
+}
+
+bool disc::get_aabb(aabb &AABB) const
+{
+    // Compute AABB as for a sphere
+    AABB.Min = P - vec3{r, r, r};
+    AABB.Max = P + vec3{r, r, r};
+    return true;
+    /*
+    // FIXME: This doesn't work...
+    // Create a small box around the disc (with 0.5m thickness) using a tangent and bitangent to the normal
+    const vec3& T  = normalize(perpendicular(N));
+    const vec3& B = cross(N, T);
+    AABB.Min = P - (T * r) - (B * r) - (N * 0.25f);
+    AABB.Max = P + (T * r) + (B * r) + (N * 0.25f);
+    return true;
+    */
 }

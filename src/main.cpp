@@ -60,6 +60,27 @@ std::unique_ptr<scene> create_and_setup_scene()
         vec3{-0.4f, 0.75f, -1.7f},
         0.20f, DiffuseRedMaterial
     });
+
+    srand(0L);
+    for (int i = 0; i < 100000; i++) {
+
+        float r = float(rand()) / float(RAND_MAX);
+        float g = float(rand()) / float(RAND_MAX);
+        float b = float(rand()) / float(RAND_MAX);
+        float e = float(rand()) / float(RAND_MAX) * 5.0f;
+
+        int Material = Scene->register_material(new lambertian{vec3{r, g, b}, e});
+
+        float x = float(rand()) / float(RAND_MAX) * 8.0f - 4.0f;
+        float y = float(rand()) / float(RAND_MAX) * 3.0f;
+        float z = float(rand()) / float(RAND_MAX) * 6.0f + 2.0f;
+        float rad = float(rand()) / float(RAND_MAX) * 0.3f + 0.2f;
+
+        Scene->Hitables.emplace_back(new sphere{
+            vec3{x, y, z}, rad, Material
+        });
+    }
+
 /*
     // Glass sphere
     Scene->Hitables.emplace_back(new sphere{
@@ -72,7 +93,7 @@ std::unique_ptr<scene> create_and_setup_scene()
 
 int main()
 {
-#define QUALITY 2
+#define QUALITY 3
 
 #if QUALITY == 0
     image Image{1920, 1080};

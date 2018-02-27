@@ -285,6 +285,11 @@ bool get_first_intersection(const scene& Scene, const ray& Ray, float MinT, floa
     return MinDistance != Infinity;
 }
 
+bool get_first_intersection_BVH(const scene& Scene, const ray& Ray, float MinT, float MaxT, hit_info *Hit)
+{
+    return Scene.BVHRootNode->intersect(Ray, MinT, MaxT, *Hit);
+}
+
 vec3 trace_ray(ray Ray, const scene& Scene, rng& Rng, int Depth)
 {
     vec3 BounceAttenuation = vec3{1, 1, 1};
@@ -293,7 +298,7 @@ vec3 trace_ray(ray Ray, const scene& Scene, rng& Rng, int Depth)
     hit_info Hit{};
     for (int CurrentDepth = 0; CurrentDepth < Depth; ++CurrentDepth)
     {
-        if (get_first_intersection(Scene, Ray, 0.0001f, INFINITY, &Hit))
+        if (get_first_intersection_BVH(Scene, Ray, 0.0001f, INFINITY, &Hit))
         {
             const material& Material = Scene.get_material(Hit.Material);
 

@@ -1,48 +1,5 @@
 #include "material.h"
 
-static bool on_same_hemisphere(const vec3& Wi, const vec3& Wo, const vec3& N)
-{
-    return copysign(1.0f, dot(Wo, N)) == copysign(1.0f, dot(Wi, N));
-}
-
-static vec3 reflect(const vec3& I, const vec3& N)
-{
-    return I - N * 2.0f * dot(N, I);
-}
-
-static bool refract(const vec3& I, const vec3& N, float NiOverNt, vec3& Refracted)
-{
-    // From: https://en.wikipedia.org/wiki/Snell%27s_law#Vector_form
-
-    float c = -dot(I, N);
-    float r = NiOverNt;
-
-    float Discriminant = 1.0f - r*r * (1.0f - c*c);
-    if (Discriminant > 0)
-    {
-        Refracted = r*I + (r*c - sqrt(Discriminant)) * N;
-        return true;
-    }
-    else
-    {
-        // Total internal reflection
-        return false;
-    }
-}
-
-static float SchlickFresnell(float Cosine, float IndexOfRefraction)
-{
-    // From: https://en.wikipedia.org/wiki/Schlick%27s_approximation
-
-    // We always assume that we go between some material and air (or actually vacuum), or the other way around
-    constexpr float Air = 1.0f;
-
-    float R0 = (Air - IndexOfRefraction) / (Air + IndexOfRefraction);
-    R0 = R0 * R0;
-
-    return R0 + (1.0f - R0) * powf(1.0f - Cosine, 5.0f);
-}
-
 lambertian::lambertian(const vec3& Albedo, float Emittance)
         : Albedo{Albedo}
 {
@@ -138,7 +95,7 @@ bool dielectric::calculate_scattered(const ray& IncomingRay, hit_info& Hit, rng&
     if (refract(IncomingRay.Direction, OutwardNormal, NiOverNt, Refracted))
     {
         // Refraction is possible
-        ReflectProbability = SchlickFresnell(Cosine, IndexOfRefraction);
+        ReflectProbability = schlick_fresnell(Cosine, IndexOfRefraction);
     }
     else
     {

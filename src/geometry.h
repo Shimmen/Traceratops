@@ -20,10 +20,10 @@ struct hit_info
 
 struct hitable
 {
-    explicit hitable(int Material) : Material(Material) {}
+    explicit hitable(int Material = 0) : Material(Material) {}
 
     virtual bool intersect(const ray& Ray, float TMin, float TMax, hit_info& Hit) const = 0;
-    //virtual const aabb& get_aabb() const = 0;
+    virtual bool get_aabb(aabb& AABB) const = 0;
 
     int Material;
 };
@@ -33,7 +33,7 @@ struct sphere: public hitable
     sphere(vec3 C, float r, int Material) : hitable(Material), C(C), r(r) {}
 
     virtual bool intersect(const ray& Ray, float TMin, float TMax, hit_info& Hit) const;
-    //virtual const aabb& get_aabb() const;
+    virtual bool get_aabb(aabb& AABB) const;
 
     vec3 C;
     float r;
@@ -44,7 +44,7 @@ struct disc: public hitable
     disc(vec3 P, vec3 N, float r, int Material) : hitable(Material), P(P), N(N), r(r) {}
 
     virtual bool intersect(const ray& Ray, float TMin, float TMax, hit_info& Hit) const;
-    //virtual const aabb& get_aabb() const;
+    virtual bool get_aabb(aabb& AABB) const;
 
     vec3 P;
     vec3 N;
