@@ -129,8 +129,10 @@ void render_scene(const scene& Scene, const camera& Camera, image& Image, int Ra
             vec3 LdrColor = tone_map_hdr_to_ldr(AccumulatedHdrColor);
 
             uint32_t Pixel = pixel_from_color(LdrColor);
-            Image.set_pixel(x, Image.Height - y - 1, Pixel);
+            Image.set_pixel(x, y, Pixel);
         }
+
+        Image.update_window();
 
         float PercentDone = 100.0f * y / Image.Height;
         printf("... %f%% done ...\r", PercentDone);

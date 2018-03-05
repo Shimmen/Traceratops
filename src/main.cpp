@@ -128,6 +128,7 @@ int main()
 
     printf("Traceratops - rendering done, writing to file");
     Image.write_to_png(ImageFileName);
+    Image.update_window(true);
 
     return 0;
 }
