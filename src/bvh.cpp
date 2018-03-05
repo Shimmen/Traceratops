@@ -12,7 +12,7 @@ static int aabb_compare(const void *L, const void *R)
     }
 
     // Compare along a random axis
-    auto CompareAxis = int(rng::global_rng().random_01() * 3.0f);
+    auto CompareAxis = int(rng::global_rng().random_01() * 2.999f);
     if (LeftAABB.Min[CompareAxis] - RightAABB.Min[CompareAxis] < 0.0f)
     {
         return -1;

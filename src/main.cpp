@@ -14,7 +14,7 @@ std::unique_ptr<scene> create_and_setup_scene()
     Scene->EnvironmentMap = std::unique_ptr<texture>(new texture{"assets/environment.hdr"});
     Scene->EnvironmentMultiplier = 1.5f;
 
-    //Scene->register_triangle_mesh("assets/lowpoly_tree.obj", vec3{0.1f, 0.6f, 3.0f});
+    Scene->register_triangle_mesh("assets/cornell_box/CornellBox-Original.obj", vec3{0.0f, 0.0f, 0.0f});
 
     int DiffuseRedMaterial  = Scene->register_material(new lambertian{vec3{1.0, 0.1, 0.1}});
     int GreenMetalMaterial  = Scene->register_material(new metal{vec3{0.4, 1.0, 0.4}, 0.2f});
@@ -22,45 +22,46 @@ std::unique_ptr<scene> create_and_setup_scene()
     int MirrorMaterial      = Scene->register_material(new metal{vec3{1, 1, 1}, 0.0});
     int ClearGlassMaterial  = Scene->register_material(new dielectric{1.5f});
     int LightMaterial       = Scene->register_material(new lambertian{vec3{1.0, 0.7, 0.7}, 10.0});
-
+/*
     // Diffuse red ball
-    Scene->Hitables.emplace_back(new sphere{
+    Scene->add_hitable(new sphere{
         vec3{0.75f, 0, 1},
         1.0, ClearGlassMaterial//DiffuseRedMaterial
     });
 
     // Diffuse green ball
-    Scene->Hitables.emplace_back(new sphere{
+    Scene->add_hitable(new sphere{
         vec3{1.25f, -1.0f, 0.0f},
         0.4, GreenMetalMaterial
     });
 
     // Mirror ball
-    Scene->Hitables.emplace_back(new sphere{
+    Scene->add_hitable(new sphere{
         vec3{-1.1f, 0.4f, 2},
         0.75, MirrorMaterial
     });
 
     // Light source
-    Scene->Hitables.emplace_back(new disc{
+    Scene->add_hitable(new disc{
         vec3{+4.2f, -0.7f, 2.2f},
         make_direction(-1.0f, +0.0f, -0.5f),
         1.25, LightMaterial
     });
 
     // Floor plane
-    Scene->Hitables.emplace_back(new disc{
+    Scene->add_hitable(new disc{
         vec3{0, -1.0f, 0},
         make_direction(0, 1.0f, 0),
         10.0f, DiffuseGrayMaterial
     });
 
     // Out of focus ball
-    Scene->Hitables.emplace_back(new sphere{
+    Scene->add_hitable(new sphere{
         vec3{-0.4f, 0.75f, -1.7f},
         0.20f, DiffuseRedMaterial
     });
-
+    */
+/*
     srand(0L);
     for (int i = 0; i < 100000; i++) {
 
@@ -76,14 +77,14 @@ std::unique_ptr<scene> create_and_setup_scene()
         float z = float(rand()) / float(RAND_MAX) * 6.0f + 2.0f;
         float rad = float(rand()) / float(RAND_MAX) * 0.3f + 0.2f;
 
-        Scene->Hitables.emplace_back(new sphere{
+        Scene->add_hitable(new sphere{
             vec3{x, y, z}, rad, Material
         });
     }
-
+*/
 /*
     // Glass sphere
-    Scene->Hitables.emplace_back(new sphere{
+    Scene->add_hitable(new sphere{
         vec3{0.25f, 0.75f, -0.7f},
         0.75f, ClearGlassMaterial
     });
@@ -110,7 +111,7 @@ int main()
 #elif QUALITY == 3
     image Image{288, 196};
     int RaysPerPixel = 16;
-    int RayMaxDepth = 2;
+    int RayMaxDepth = 4;
 #endif
 
     std::string ImageFileName = "traceratops_render.png";
@@ -119,8 +120,9 @@ int main()
     auto Scene = create_and_setup_scene();
     Scene->prepare_for_rendering();
 
-    float ApertureSize = 0.25f;
-    camera Camera{vec3{0, 1, -2}, vec3{0.75f, 0, 1}, vec3{0, 1, 0}, Image, 90, ApertureSize};
+    float ApertureSize = 0.05f;
+    //camera Camera{vec3{0, 1, -2}, vec3{0.75f, 0, 1}, vec3{0, 1, 0}, Image, 90, ApertureSize};
+    camera Camera{vec3{0, 1, 1.3f}, vec3{0, 1, 0}, vec3{0, 1, 0}, Image, 90, ApertureSize};
 
     render_scene(*Scene, Camera, Image, RaysPerPixel, RayMaxDepth);
 

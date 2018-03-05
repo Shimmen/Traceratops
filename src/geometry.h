@@ -51,4 +51,14 @@ struct disc: public hitable
     float r;
 };
 
+struct triangle: public hitable
+{
+    triangle(vec3 V0, vec3 V1, vec3 V2, int Material) : hitable(Material), V0(V0), V1(V1), V2(V2) {}
+
+    virtual bool intersect(const ray& Ray, float TMin, float TMax, hit_info& Hit) const;
+    virtual bool get_aabb(aabb& AABB) const;
+
+    vec3 V0, V1, V2;
+};
+
 #endif // TRACERATOPS_GEOMETRY_H

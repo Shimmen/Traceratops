@@ -94,3 +94,69 @@ bool disc::get_aabb(aabb &AABB) const
     return true;
     */
 }
+
+bool triangle::intersect(const ray& Ray, float TMin, float TMax, hit_info& Hit) const
+{
+    // From GraphicsCodex
+
+    const vec3& E1 = V1 - V0;
+    const vec3& E2 = V2 - V0;
+
+    vec3 N = cross(E1, E2);
+    normalize(&N);
+
+    vec3 q = cross(Ray.Direction, E2);
+    float a = dot(E1, q);
+
+    // (Nearly) parallel or backfacing, or close to the limit of precision?
+    if (dot(N, Ray.Direction) >= 0 || fabsf(a) <= IntersectionTolerance)
+    {
+        return false;
+    }
+
+    const vec3& s = (Ray.Origin - V0) / a;
+    const vec3& r = cross(s, E1);
+
+    // Barycentric coordinates
+    float b[3];
+    b[0] = dot(s, q);
+    b[1] = dot(r, Ray.Direction);
+    b[2] = 1.0f - b[0] - b[1];
+
+    // Intersected inside triangle?
+    float t = dot(E2, r);
+    if ((b[0] >= 0) && (b[1] >= 0) && (b[2] >= 0) && (t > 0.0f))// && (t <= TMax))
+    {
+        Hit.Distance = t;
+        Hit.Point = Ray.Origin + (Ray.Direction * t);
+        Hit.Normal = N; // TODO: Use smooth face normal using barycentric coords!
+        Hit.Material = Material;
+
+        return true;
+    }
+
+    return false;
+}
+
+bool triangle::get_aabb(aabb& AABB) const
+{
+    AABB.Min = V0;
+    min(&AABB.Min, V1);
+    min(&AABB.Min, V2);
+
+    AABB.Max = V0;
+    max(&AABB.Max, V1);
+    max(&AABB.Max, V2);
+
+    // Expand AABB so we don't miss very AA-wise-thin triangles
+
+    AABB.Min.x -= 0.01f;
+    AABB.Min.y -= 0.01f;
+    AABB.Min.z -= 0.01f;
+
+    AABB.Max.x += 0.01f;
+    AABB.Max.y += 0.01f;
+    AABB.Max.z += 0.01f;
+
+    return true;
+}
