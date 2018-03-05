@@ -62,9 +62,14 @@ scene::register_triangle_mesh(const std::string& ObjFileName, const vec3& Transl
     std::string Error;
     bool Success = tinyobj::LoadObj(&Attributes, &Shapes, &Materials, &Error, ObjFileName.c_str(), MtlBase, true);
 
-    if (!Error.empty() || !Success)
+    if (!Error.empty())
     {
-        printf("Failed to load obj file '%s': %s!\n", ObjFileName.c_str(), Error.c_str());
+        fprintf(stderr, "'%s':\n\t%s", ObjFileName.c_str(), Error.c_str());
+
+        if (!Success)
+        {
+            std::exit(1);
+        }
     }
 
     std::vector<int> MaterialIndexMap;

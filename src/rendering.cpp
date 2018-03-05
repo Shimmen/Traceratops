@@ -180,6 +180,9 @@ vec3 trace_ray(ray Ray, const scene& Scene, rng& Rng, int Depth)
     {
         if (get_first_intersection(Scene, Ray, 0.0001f, INFINITY, &Hit))
         {
+            // NOTE: For debugging enable this for rendering normals!
+            //return Hit.Normal * vec3(0.5) + vec3(0.5);
+
             const material& Material = Scene.get_material(Hit.Material);
 
             ray Scattered{};
