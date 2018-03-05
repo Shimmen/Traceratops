@@ -71,13 +71,26 @@ scene::register_triangle_mesh(const std::string& ObjFileName, const vec3& Transl
     for (auto& ObjMaterial: Materials)
     {
         // TODO: Do this in a better way (and support more types of materials)!
+        //       Currently it's just a big hack, but we'll get there!
 
         // Use green emission as emission float
         float Emission = ObjMaterial.emission[1];
 
-        vec3 Color = vec3{ ObjMaterial.diffuse[0], ObjMaterial.diffuse[1], ObjMaterial.diffuse[2] };
+        vec3 DiffuseColor = vec3{ ObjMaterial.diffuse[0], ObjMaterial.diffuse[1], ObjMaterial.diffuse[2] };
+        vec3 SpecularColor = vec3{ ObjMaterial.specular[0], ObjMaterial.specular[1], ObjMaterial.specular[2] };
 
-        material *Material = new lambertian{Color, Emission};
+        float DiffuseAmount = dot(DiffuseColor, vec3{1});
+        float SpecularAmount = dot(SpecularColor, vec3{1});
+
+        material *Material;
+        if (DiffuseAmount > SpecularAmount)
+        {
+            Material = new lambertian{DiffuseColor, Emission};
+        }
+        else
+        {
+            Material = new metal{SpecularColor, 0, Emission};
+        }
         int MaterialIndex = register_material(Material);
 
         MaterialIndexMap.push_back(MaterialIndex);
