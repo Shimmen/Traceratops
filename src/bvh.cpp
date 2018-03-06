@@ -54,6 +54,19 @@ bvh_node::bvh_node(hitable **Hitables, size_t Count)
     NodeAABB = aabb_enclosing(AABBs, 2);
 }
 
+bvh_node::~bvh_node()
+{
+    if (Left == Right)
+    {
+        delete Left;
+    }
+    else
+    {
+        delete Left;
+        delete Right;
+    }
+}
+
 bool bvh_node::intersect(const ray& Ray, float TMin, float TMax, hit_info& Hit) const
 {
     if (aabb_ray_intersection(NodeAABB, Ray.Direction, Ray.Origin))

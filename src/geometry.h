@@ -21,6 +21,7 @@ struct hit_info
 struct hitable
 {
     explicit hitable(int Material = 0) : Material(Material) {}
+    virtual ~hitable() = default;
 
     virtual bool intersect(const ray& Ray, float TMin, float TMax, hit_info& Hit) const = 0;
     virtual bool get_aabb(aabb& AABB) const = 0;
