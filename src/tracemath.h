@@ -186,6 +186,18 @@ void max(vec3 *a, const vec3& b)
 }
 
 static inline
+void clamp(vec3 *a, float min, float max)
+{
+    a->x = fminf(a->x, max);
+    a->y = fminf(a->y, max);
+    a->z = fminf(a->z, max);
+
+    a->x = fmaxf(a->x, min);
+    a->y = fmaxf(a->y, min);
+    a->z = fmaxf(a->z, min);
+}
+
+static inline
 int index_of_min(const vec3& a)
 {
     if (a.x < a.y && a.x < a.z) return 0;
@@ -344,6 +356,25 @@ private:
     std::uniform_real_distribution<float> uniform_neg11_dist{-1.0f, 1.0f};
 
 };
+
+///////////////////////////////////////////////////////////////
+// pixel encoding
+
+static uint32_t encode_rgb_to_packed_pixel_int(const vec3& Rgb)
+{
+    constexpr float gamma = 2.2f;
+    constexpr float gamma_pow = 1.0f / gamma;
+
+    vec3 Clamped = Rgb;
+    clamp(&Clamped, 0.0f, 1.0f);
+
+    uint32_t r = 0xFF & uint32_t(powf(Clamped.x, gamma_pow) * 255.99f);
+    uint32_t g = 0xFF & uint32_t(powf(Clamped.y, gamma_pow) * 255.99f);
+    uint32_t b = 0xFF & uint32_t(powf(Clamped.z, gamma_pow) * 255.99f);
+    uint32_t a = 0xFF;
+
+    return (a << 24) | (b << 16) | (g << 8) | (r << 0);
+}
 
 ///////////////////////////////////////////////////////////////
 

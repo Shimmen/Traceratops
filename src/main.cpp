@@ -3,7 +3,7 @@
 #include "image.h"
 #include "scene.h"
 #include "camera.h"
-#include "rendering.h"
+#include "basic_renderer.h"
 
 using namespace tracemath;
 
@@ -124,7 +124,8 @@ int main()
     //camera Camera{vec3{0, 1, -2}, vec3{0.75f, 0, 1}, vec3{0, 1, 0}, Image, 90, ApertureSize};
     camera Camera{vec3{0, 1, 1.3f}, vec3{0, 1, 0}, vec3{0, 1, 0}, Image, 90, ApertureSize};
 
-    render_scene(*Scene, Camera, Image, RaysPerPixel, RayMaxDepth);
+    basic_renderer Renderer{RaysPerPixel, RayMaxDepth};
+    Renderer.render_scene(*Scene, Camera, Image);
 
     printf("Traceratops - rendering done, writing to file");
     Image.write_to_png(ImageFileName);
