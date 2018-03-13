@@ -9,8 +9,10 @@ lambertian::lambertian(const vec3& Albedo, float Emittance)
 
 vec3 lambertian::brdf(const vec3& Wi, const vec3& Wo, const hit_info& Hit, rng& Rng) const
 {
-    if (dot(Wi, Hit.Normal) <= 0.0f) return vec3{0.0f};
-    if (!on_same_hemisphere(Wi, Wo, Hit.Normal)) return vec3{0.0f};
+    bool Absorb = dot(Wi, Hit.Normal) <= 0.0f;
+    bool NotSameHemisphere = !on_same_hemisphere(Wi, Wo, Hit.Normal);
+    if (Absorb || NotSameHemisphere) return vec3{0.0f};
+
     return Albedo / tracemath::PI;
 }
 

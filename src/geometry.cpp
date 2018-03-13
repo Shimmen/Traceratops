@@ -35,7 +35,10 @@ bool sphere::intersect(const ray &Ray, float TMin, float TMax, hit_info& Hit) co
         Hit.Distance = t;
         Hit.Point = Ray.Origin + t * Ray.Direction;
         Hit.Normal = normalize(Hit.Point - C);
+
         Hit.Material = Material;
+        Hit.Hitable = this;
+
         return true;
     }
 
@@ -70,7 +73,10 @@ bool disc::intersect(const ray &Ray, float TMin, float TMax, hit_info &Hit) cons
         if (length2(Hit.Point - P) <= (r * r))
         {
             Hit.Normal = N;
+
             Hit.Material = Material;
+            Hit.Hitable = this;
+
             return true;
         }
     }
@@ -125,12 +131,14 @@ bool triangle::intersect(const ray& Ray, float TMin, float TMax, hit_info& Hit) 
 
     // Intersected inside triangle?
     float t = dot(E2, r);
-    if ((b[0] >= 0) && (b[1] >= 0) && (b[2] >= 0) && (t > 0.0f))// && (t <= TMax))
+    if ((b[0] >= 0) && (b[1] >= 0) && (b[2] >= 0) && t >= TMin && t <= TMax)
     {
         Hit.Distance = t;
         Hit.Point = Ray.Origin + (Ray.Direction * t);
         Hit.Normal = N; // TODO: Use smooth face normal using barycentric coords!
+
         Hit.Material = Material;
+        Hit.Hitable = this;
 
         return true;
     }

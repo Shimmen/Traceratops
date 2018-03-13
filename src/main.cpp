@@ -12,7 +12,7 @@ std::unique_ptr<scene> create_and_setup_scene()
     std::unique_ptr<scene> Scene(new scene{});
 
     Scene->EnvironmentMap = std::unique_ptr<texture>(new texture{"assets/environment.hdr"});
-    Scene->EnvironmentMultiplier = 1.5f;
+    Scene->EnvironmentMultiplier = 0.3f;
 
     Scene->register_triangle_mesh("assets/cornell_box/CornellBox-Original.obj", vec3{0.0f, 0.0f, 0.0f});
 
@@ -97,19 +97,19 @@ int main()
 #define QUALITY 3
 
 #if QUALITY == 0
-    image Image{1920, 1080};
-    int RaysPerPixel = 1024;
+    image Image{1080, 1080};
+    int RaysPerPixel = 256;
     int RayMaxDepth = 8;
 #elif QUALITY == 1
-    image Image{720, 480};
+    image Image{720, 720};
     int RaysPerPixel = 64;
-    int RayMaxDepth = 4;
+    int RayMaxDepth = 8;
 #elif QUALITY == 2
     image Image{288, 196};
     int RaysPerPixel = 1024;
     int RayMaxDepth = 8;
 #elif QUALITY == 3
-    image Image{288, 196};
+    image Image{200, 200};
     int RaysPerPixel = 16;
     int RayMaxDepth = 4;
 #endif
@@ -122,7 +122,7 @@ int main()
 
     float ApertureSize = 0.05f;
     //camera Camera{vec3{0, 1, -2}, vec3{0.75f, 0, 1}, vec3{0, 1, 0}, Image, 90, ApertureSize};
-    camera Camera{vec3{0, 1, 1.3f}, vec3{0, 1, 0}, vec3{0, 1, 0}, Image, 90, ApertureSize};
+    camera Camera{vec3{0, 1, 2.2f}, vec3{0, 1, 0}, vec3{0, 1, 0}, Image, 75, ApertureSize};
 
     basic_renderer Renderer{RaysPerPixel, RayMaxDepth};
     Renderer.render_scene(*Scene, Camera, Image);

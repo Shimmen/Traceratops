@@ -45,6 +45,11 @@ scene::add_hitable(hitable *Hitable)
 {
     invalidate_current_bvh();
     Hitables.push_back(Hitable);
+
+    if (!is_zero(get_material(Hitable->Material).EmitColor))
+    {
+        EmittingHitables.push_back(Hitable);
+    }
 }
 
 void
@@ -150,7 +155,7 @@ scene::register_triangle_mesh(const std::string& ObjFileName, const vec3& Transl
             int FaceMaterial = MaterialIndexMap[ObjFaceMaterialIndex];
 
             auto *Triangle = new triangle{TriangleVertices[0], TriangleVertices[1], TriangleVertices[2], FaceMaterial};
-            Hitables.push_back(Triangle);
+            add_hitable(Triangle);
 
         }
 

@@ -4,6 +4,8 @@
 #include "tracemath.h"
 #include "aabb.h"
 
+struct hitable;
+
 struct ray
 {
     vec3 Origin;
@@ -14,8 +16,11 @@ struct hit_info
 {
     vec3 Point;
     vec3 Normal;
-    int Material;
     float Distance;
+
+    // TODO: Remove material from here, can be accessed through Hitable
+    int Material;
+    const hitable *Hitable;
 };
 
 struct hitable

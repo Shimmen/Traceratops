@@ -17,6 +17,12 @@ namespace tracemath
     constexpr float TWO_PI = TAU;
 }
 
+static inline
+float square(float x)
+{
+    return x * x;
+}
+
 ///////////////////////////////////////////////////////////////
 // vectors
 
@@ -198,6 +204,13 @@ void clamp(vec3 *a, float min, float max)
 }
 
 static inline
+bool is_zero(const vec3& a)
+{
+    constexpr float eps = std::numeric_limits<float>().epsilon();
+    return std::abs(a.x) < eps && std::abs(a.y) < eps && std::abs(a.z) < eps;
+}
+
+static inline
 int index_of_min(const vec3& a)
 {
     if (a.x < a.y && a.x < a.z) return 0;
@@ -305,12 +318,6 @@ public:
         engine.seed(seed);
     }
 
-    explicit rng(std::thread::id ThreadId)
-    {
-        size_t ThreadIdHash = std::hash<std::thread::id>{}(ThreadId);
-        engine.seed(static_cast<unsigned int>(ThreadIdHash));
-    }
-
     inline float random_01()
     {
         return uniform_01_dist(engine);
@@ -319,6 +326,12 @@ public:
     inline float random_neg11()
     {
         return uniform_neg11_dist(engine);
+    }
+
+    inline int random_int_in_range(int Min, int Max)
+    {
+        std::uniform_int_distribution<> distribution{Min, Max};
+        return distribution(engine);
     }
 
     // (on the xy-plane)

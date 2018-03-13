@@ -28,6 +28,7 @@ public:
     void prepare_for_rendering();
     bool is_prepared_for_rendering() const;
 
+    std::vector<hitable *> EmittingHitables;
     std::vector<hitable *> Hitables;
     bvh_node *BVHRootNode = nullptr;
 
