@@ -1,13 +1,13 @@
 Traceratops
 ===========
 
-A silly name for a path tracer, of course!
+![](assets/generated/header_image.png)
 
-More to come.
+A path tracer, of course! More to come.
 
 ### License
 
-Copyright 2017 Simon Moos
+Copyright 2017-2018 Simon Moos
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
