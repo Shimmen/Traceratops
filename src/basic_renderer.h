@@ -18,7 +18,14 @@ private:
     vec3 trace_ray(ray Ray, const scene& Scene, rng& Rng) const override;
 
     ray get_light_ray(const vec3& Origin, const scene& Scene, rng& Rng, hitable **LightSource, float *MaxDistance) const;
+    bool intersects_shadow_cache(const ray& Ray, float DistanceToLight, int CurrentRayDepth) const;
+    void save_shadow_cache(const hitable *Hitable, int CurrentRayDepth) const;
+
     vec3 tone_map_hdr_to_ldr(const vec3& Hdr) const;
+
+    mutable const hitable *ShadowCache = nullptr;
+    mutable int CacheHits = 0;
+    mutable int CacheTries = 0;
 
     int RaysPerPixel;
     int MaxRayDepth;

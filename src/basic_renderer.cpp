@@ -47,6 +47,9 @@ void basic_renderer::render_scene(const scene &Scene, const camera &Camera, imag
     }
 
     printf("... 100%% done ...\n");
+
+    float CacheHitRate = float(CacheHits) / float(CacheTries);
+    printf("shadow cache hit rate = %.3f%% (%d hits / %d tries)\n", CacheHitRate, CacheHits, CacheTries);
 }
 
 bool
@@ -101,53 +104,56 @@ basic_renderer::trace_ray(ray Ray, const scene& Scene, rng& Rng) const
             // Direct light evaluated at Hit.Position
             {
                 hitable *LightSource{};
-                float MaxDistance;
+                float LightDistance;
 
                 // Use an offset origin and but 0 as MinT so we don't accidentally miss ourself. Usually we want to
                 // avoid hitting ourself so this is therefore treated a bit like a special case.
                 vec3 Origin = Hit.Point + (0.01f * Hit.Normal);
 
-                ray LightRay = get_light_ray(Origin, Scene, Rng, &LightSource, &MaxDistance);
-
-                // TODO: First test shadow cache!
-
+                ray LightRay = get_light_ray(Origin, Scene, Rng, &LightSource, &LightDistance);
                 hit_info LightRayHit{};
-                bool DidHitAnything = get_first_intersection(Scene, LightRay, 0.0f, MaxDistance, &LightRayHit);
 
-                if (!DidHitAnything)
+                if (!intersects_shadow_cache(LightRay, LightDistance, CurrentDepth))
                 {
-                    // TODO: Check to make sure we're not just at a very steep gracing angle!!!
-                    // Because the only situation where I get this to happen (in cornell box) is at rays that originate
-                    // from y=1.98, i.e. same y-coordinate as the light source so that the ray will be perfectly
-                    // orthogonal to the light source. In that case this is okay, since the cosine term would evaluate
-                    // to 0 in any case. BUT, it would be good if we could notice if this isn't the case somehow. For a
-                    // triangle this is easy but I don't think it's possible in the general case. Maybe we will just
-                    // have to convince ourselves after a while that this actually works...
+                    bool DidHitAnything = get_first_intersection(Scene, LightRay, 0.0f, LightDistance + 0.001f, &LightRayHit);
 
-                    //printf("Light ray didn't hit anything (at pos %f %f %f), not even the light source! Something might be wrong!\n", Origin.x, Origin.y, Origin.z);
-                }
+                    if (!DidHitAnything)
+                    {
+                        // TODO: Check to make sure we're not just at a very steep gracing angle!!!
+                        // Because the only situation where I get this to happen (in cornell box) is at rays that originate
+                        // from y=1.98, i.e. same y-coordinate as the light source so that the ray will be perfectly
+                        // orthogonal to the light source. In that case this is okay, since the cosine term would evaluate
+                        // to 0 in any case. BUT, it would be good if we could notice if this isn't the case somehow. For a
+                        // triangle this is easy but I don't think it's possible in the general case. Maybe we will just
+                        // have to convince ourselves after a while that this actually works...
 
-                if (LightRayHit.Hitable == LightSource)
-                {
+                        //printf("Light ray didn't hit anything (at pos %f %f %f), not even the light source! Something might be wrong!\n", Origin.x, Origin.y, Origin.z);
+                    }
+                    else if (LightRayHit.Hitable == LightSource)
+                    {
+                        auto& LightMaterial = Scene.get_material(LightSource->Material);
+                        vec3 LightEmittance = LightMaterial.EmitColor;
 
-                    auto& LightMaterial = Scene.get_material(LightSource->Material);
-                    vec3 LightEmittance = LightMaterial.EmitColor;
+                        vec3 Wi = normalize(LightRay.Direction);
+                        vec3 Wo = normalize(-Ray.Direction);
+                        vec3 BRDF = Material.brdf(Wi, Wo, Hit, Rng);
 
-                    vec3 Wi = normalize(LightRay.Direction);
-                    vec3 Wo = normalize(-Ray.Direction);
-                    vec3 BRDF = Material.brdf(Wi, Wo, Hit, Rng);
+                        float DistanceAttenuation = 1.0f / square(LightRayHit.Distance);
+                        float CosineAttenuation = std::abs(dot(LightRay.Direction, Hit.Normal)); // TODO: clamp here?! relevant for refraction?
 
-                    float DistanceAttenuation = 1.0f / square(LightRayHit.Distance);
-                    float CosineAttenuation = std::abs(dot(LightRay.Direction, Hit.Normal)); // TODO: clamp here?!
+                        vec3 DirectLight = BounceAttenuation * BRDF * CosineAttenuation * DistanceAttenuation * LightEmittance;
+                        ResultColor = ResultColor + DirectLight;
 
-                    vec3 DirectLight = BounceAttenuation * BRDF * CosineAttenuation * DistanceAttenuation * LightEmittance;
-                    ResultColor = ResultColor + DirectLight;
+                        // TODO: Apply the PDF from the get_light_ray function!
 
-                    // TODO: Apply the PDF from the get_light_ray function!
-                }
-                else
-                {
-                    // TODO: Save the hit object for the shadow cache!
+                        // Light ray hit the light source, invalidate the shadow cache
+                        save_shadow_cache(nullptr, CurrentDepth);
+                    }
+                    else
+                    {
+                        // Light ray hit some other hitable, save it to the shadow cache
+                        save_shadow_cache(LightRayHit.Hitable, CurrentDepth);
+                    }
                 }
 
             }
@@ -231,9 +237,7 @@ basic_renderer::get_light_ray(const vec3& Origin, const scene& Scene, rng& Rng, 
     } while (u + v > 1.0f);
     vec3 Point = Triangle->V0 + u * (Triangle->V1 - Triangle->V0) + v * (Triangle->V2 - Triangle->V0);
     vec3 ToPoint = Point - Origin;
-
-    // Add some extra margin distance so we don't miss the light source
-    *MaxDistance = length(ToPoint) + 0.001f;
+    *MaxDistance = length(ToPoint);
 
     // TODO: Importance sample (i.e. weight by hitable size)
 
@@ -241,6 +245,42 @@ basic_renderer::get_light_ray(const vec3& Origin, const scene& Scene, rng& Rng, 
     LightRay.Direction = normalize(ToPoint);
     LightRay.Origin = Origin;
     return LightRay;
+}
+
+bool
+basic_renderer::intersects_shadow_cache(const ray& Ray, float DistanceToLight, int CurrentRayDepth) const
+{
+    // TODO: Support multiple levels of cache maybe? But first we will need to measure stuff properly
+    if (CurrentRayDepth != 0)
+    {
+        return false;
+    }
+
+    CacheTries += 1;
+
+    if (!ShadowCache)
+    {
+        return false;
+    }
+
+    hit_info HitInfo{};
+    bool DidHit = ShadowCache->intersect(Ray, 0.0f, DistanceToLight, HitInfo);
+
+    CacheHits += (DidHit) ? 1 : 0;
+
+    return DidHit;
+}
+
+void
+basic_renderer::save_shadow_cache(const hitable *Hitable, int CurrentRayDepth) const
+{
+    // TODO: Support multiple levels of cache maybe? But first we will need to measure stuff properly
+    if (CurrentRayDepth != 0)
+    {
+        return;
+    }
+
+    ShadowCache = Hitable;
 }
 
 vec3
