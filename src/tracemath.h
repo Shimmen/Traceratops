@@ -246,6 +246,15 @@ vec3 max_and_zeroes(const vec3& a)
 }
 
 ///////////////////////////////////////////////////////////////
+// ray
+
+struct ray
+{
+    vec3 Origin;
+    vec3 Direction;
+};
+
+///////////////////////////////////////////////////////////////
 // general purpose geometrical math
 
 static bool on_same_hemisphere(const vec3& Wi, const vec3& Wo, const vec3& N)

@@ -6,12 +6,6 @@
 
 struct hitable;
 
-struct ray
-{
-    vec3 Origin;
-    vec3 Direction;
-};
-
 struct hit_info
 {
     vec3 Point;

@@ -53,25 +53,25 @@ bool aabb_point_intersection(const aabb& a, const vec3& p)
 
 
 static inline
-bool aabb_ray_intersection(const aabb& b, const vec3& Direction, const vec3& Origin)
+bool aabb_ray_intersection(const aabb& b, const ray& Ray, float MaxT)
 {
     // From Tavian Barnes:
     // https://tavianator.com/fast-branchless-raybounding-box-intersections-part-2-nans/
 
-#define AABB_RAY_NAN_CORRECTNESS
+#define AABB_RAY_NAN_CORRECTNESS 1
 
-    float t1 = (b.Min[0] - Origin[0]) / Direction[0];
-    float t2 = (b.Max[0] - Origin[0]) / Direction[0];
+    float t1 = (b.Min[0] - Ray.Origin[0]) / Ray.Direction[0];
+    float t2 = (b.Max[0] - Ray.Origin[0]) / Ray.Direction[0];
 
     float tmin = std::min(t1, t2);
     float tmax = std::max(t1, t2);
 
     for (int i = 1; i < 3; ++i)
     {
-        t1 = (b.Min[i] - Origin[i]) / Direction[i];
-        t2 = (b.Max[i] - Origin[i]) / Direction[i];
+        t1 = (b.Min[i] - Ray.Origin[i]) / Ray.Direction[i];
+        t2 = (b.Max[i] - Ray.Origin[i]) / Ray.Direction[i];
 
-#ifdef AABB_RAY_NAN_CORRECTNESS
+#if AABB_RAY_NAN_CORRECTNESS == 1
         tmin = std::max(tmin, std::min(std::min(t1, t2), tmax));
         tmax = std::min(tmax, std::max(std::max(t1, t2), tmin));
 #else
@@ -80,7 +80,12 @@ bool aabb_ray_intersection(const aabb& b, const vec3& Direction, const vec3& Ori
 #endif
     }
 
-    return tmax > std::max(tmin, 0.0f);
+    bool DidIntersectAtAll = tmax > std::max(tmin, 0.0f);
+
+    // NOTE: We can't use a min value since AABB in the scene are allowed to intersect. So if we intersected an AABB we
+    // can never know that that intersection point doesn't also intersect some other AABB so therefore we can't use MinT
+    float t = tmin;
+    return DidIntersectAtAll && t <= MaxT;
 }
 
 #endif // TRACERATOPS_AABB_H
