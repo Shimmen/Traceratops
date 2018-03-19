@@ -1,5 +1,7 @@
 #include "basic_renderer.h"
 
+#include "timer.h"
+
 basic_renderer::basic_renderer(int RaysPerPixel, int MaxRayDepth)
     : RaysPerPixel(RaysPerPixel), MaxRayDepth(MaxRayDepth)
 {
@@ -15,7 +17,9 @@ void basic_renderer::render_scene(const scene &Scene, const camera &Camera, imag
     }
 
     rng Rng{};
+    timer Timer{};
 
+    Timer.start();
     for (uint32_t y = 0; y < Image.Height; ++y)
     {
         for (uint32_t x = 0; x < Image.Width; ++x)
@@ -28,6 +32,7 @@ void basic_renderer::render_scene(const scene &Scene, const camera &Camera, imag
                 float v = (y + 0.5f + 0.5f * Rng.random_neg11()) / Image.Height;
                 const ray& Ray = Camera.get_ray(u, v, Rng);
 
+                Timer.new_iteration();
                 vec3 Color = trace_ray(Ray, Scene, Rng);
                 AccumulatedHdrColor = AccumulatedHdrColor + Color;
             }
@@ -45,11 +50,15 @@ void basic_renderer::render_scene(const scene &Scene, const camera &Camera, imag
         printf("... %f%% done ...\r", PercentDone);
         fflush(stdout);
     }
+    Timer.end();
 
     printf("... 100%% done ...\n");
 
+    printf(" - total time elapsed = %.3fs\n", Timer.get_seconds_elapsed());
+    printf(" - time taken per ray = %lldns\n", Timer.get_nanoseconds_elapsed_per_iteration());
+
     float CacheHitRate = float(CacheHits) / float(CacheTries);
-    printf("shadow cache hit rate = %.3f%% (%d hits / %d tries)\n", CacheHitRate, CacheHits, CacheTries);
+    printf(" - shadow cache hit rate = %.3f%% (%d hits / %d tries)\n", CacheHitRate, CacheHits, CacheTries);
 }
 
 bool
@@ -250,21 +259,15 @@ basic_renderer::get_light_ray(const vec3& Origin, const scene& Scene, rng& Rng, 
 bool
 basic_renderer::intersects_shadow_cache(const ray& Ray, float DistanceToLight, int CurrentRayDepth) const
 {
-    // TODO: Support multiple levels of cache maybe? But first we will need to measure stuff properly
-    if (CurrentRayDepth != 0)
-    {
-        return false;
-    }
-
     CacheTries += 1;
 
-    if (!ShadowCache)
+    if (CurrentRayDepth >= ShadowCacheMaxDepth || !ShadowCache[CurrentRayDepth])
     {
         return false;
     }
 
     hit_info HitInfo{};
-    bool DidHit = ShadowCache->intersect(Ray, 0.0f, DistanceToLight, HitInfo);
+    bool DidHit = ShadowCache[CurrentRayDepth]->intersect(Ray, 0.0f, DistanceToLight, HitInfo);
 
     CacheHits += (DidHit) ? 1 : 0;
 
@@ -274,13 +277,10 @@ basic_renderer::intersects_shadow_cache(const ray& Ray, float DistanceToLight, i
 void
 basic_renderer::save_shadow_cache(const hitable *Hitable, int CurrentRayDepth) const
 {
-    // TODO: Support multiple levels of cache maybe? But first we will need to measure stuff properly
-    if (CurrentRayDepth != 0)
+    if (CurrentRayDepth < ShadowCacheMaxDepth)
     {
-        return;
+        ShadowCache[CurrentRayDepth] = Hitable;
     }
-
-    ShadowCache = Hitable;
 }
 
 vec3

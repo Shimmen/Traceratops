@@ -23,7 +23,8 @@ private:
 
     vec3 tone_map_hdr_to_ldr(const vec3& Hdr) const;
 
-    mutable const hitable *ShadowCache = nullptr;
+    static constexpr int ShadowCacheMaxDepth = 3;
+    mutable const hitable *ShadowCache[ShadowCacheMaxDepth] = {nullptr};
     mutable int CacheHits = 0;
     mutable int CacheTries = 0;
 
