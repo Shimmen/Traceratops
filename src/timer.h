@@ -21,6 +21,11 @@ public:
         NumIterations += 1;
     }
 
+    void add_iterations(uint64_t Additional)
+    {
+        NumIterations += Additional;
+    }
+
     void end()
     {
         End = std::chrono::high_resolution_clock::now();
@@ -48,6 +53,13 @@ public:
     {
         assert(NumIterations > 0);
         return get_nanoseconds_elapsed() / NumIterations;;
+    }
+
+    double get_mega_iterations_per_second()
+    {
+        double s = get_seconds_elapsed();
+        double MegaIterations = static_cast<double>(NumIterations) / 1000000.0;
+        return MegaIterations / s;
     }
 
 private:

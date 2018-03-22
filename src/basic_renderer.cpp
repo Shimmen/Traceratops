@@ -16,6 +16,8 @@ void basic_renderer::render_scene(const scene &Scene, const camera &Camera, imag
         return;
     }
 
+    printf("-------------\n- rendering -\n-------------\n");
+
     rng Rng{};
     timer Timer{};
 
@@ -47,18 +49,23 @@ void basic_renderer::render_scene(const scene &Scene, const camera &Camera, imag
         Image.update_window();
 
         float PercentDone = 100.0f * y / Image.Height;
-        printf("... %f%% done ...\r", PercentDone);
+        printf("%f%% done\r", PercentDone);
         fflush(stdout);
     }
     Timer.end();
 
-    printf("... 100%% done ...\n");
+    printf("100%% done\n");
 
+    printf("-------------\n--- stats ---\n-------------\n");
     printf(" - total time elapsed = %.3fs\n", Timer.get_seconds_elapsed());
-    printf(" - time taken per ray = %lldns\n", Timer.get_nanoseconds_elapsed_per_iteration());
+    printf(" - average time elapsed per ray = %lldns\n", Timer.get_nanoseconds_elapsed_per_iteration());
+    printf(" - mega paths (+light rays) / second = %.3f\n", Timer.get_mega_iterations_per_second());
+    printf(" - Mrays/s = %.3f\n", Timer.get_mega_iterations_per_second() * 16.0);
 
     float CacheHitRate = float(CacheHits) / float(CacheTries);
     printf(" - shadow cache hit rate = %.3f%% (%d hits / %d tries)\n", CacheHitRate, CacheHits, CacheTries);
+
+    printf("-------------\n");
 }
 
 bool
