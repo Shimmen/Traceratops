@@ -33,4 +33,4 @@ private:
 
 };
 
-#endif //TRACERATOPS_BASIC_RENDERER_H
+#endif // TRACERATOPS_BASIC_RENDERER_H

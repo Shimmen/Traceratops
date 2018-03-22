@@ -117,6 +117,60 @@ vec3 operator/(const vec3& a, float s)
 }
 
 static inline
+vec3& operator+=(vec3& a, const vec3& b)
+{
+    a.x += b.x;
+    a.y += b.y;
+    a.z += b.z;
+    return a;
+}
+
+static inline
+vec3& operator-=(vec3& a, const vec3& b)
+{
+    a.x -= b.x;
+    a.y -= b.y;
+    a.z -= b.z;
+    return a;
+}
+
+static inline
+vec3& operator*=(vec3& a, const vec3& b)
+{
+    a.x *= b.x;
+    a.y *= b.y;
+    a.z *= b.z;
+    return a;
+}
+
+static inline
+vec3& operator/=(vec3& a, const vec3& b)
+{
+    a.x /= b.x;
+    a.y /= b.y;
+    a.z /= b.z;
+    return a;
+}
+
+static inline
+vec3& operator*=(vec3& a, float s)
+{
+    a.x *= s;
+    a.y *= s;
+    a.z *= s;
+    return a;
+}
+
+static inline
+vec3& operator/=(vec3& a, float s)
+{
+    a.x /= s;
+    a.y /= s;
+    a.z /= s;
+    return a;
+}
+
+static inline
 vec3 cross(const vec3& a, const vec3& b)
 {
     return vec3{

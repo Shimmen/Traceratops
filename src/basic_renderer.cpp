@@ -36,7 +36,7 @@ void basic_renderer::render_scene(const scene &Scene, const camera &Camera, imag
 
                 Timer.new_iteration();
                 vec3 Color = trace_ray(Ray, Scene, Rng);
-                AccumulatedHdrColor = AccumulatedHdrColor + Color;
+                AccumulatedHdrColor += Color;
             }
 
             AccumulatedHdrColor = AccumulatedHdrColor * (1.0f / RaysPerPixel);
@@ -158,7 +158,7 @@ basic_renderer::trace_ray(ray Ray, const scene& Scene, rng& Rng) const
                         float CosineAttenuation = std::abs(dot(LightRay.Direction, Hit.Normal)); // TODO: clamp here?! relevant for refraction?
 
                         vec3 DirectLight = BounceAttenuation * BRDF * CosineAttenuation * DistanceAttenuation * LightEmittance;
-                        ResultColor = ResultColor + DirectLight;
+                        ResultColor += DirectLight;
 
                         // TODO: Apply the PDF from the get_light_ray function!
 
@@ -183,7 +183,7 @@ basic_renderer::trace_ray(ray Ray, const scene& Scene, rng& Rng) const
 
                 float CosineAttenuation = std::abs(dot(Scattered.Direction, Hit.Normal));
                 vec3 BRDF = Material.brdf(Scattered.Direction, -Ray.Direction, Hit, Rng);
-                BounceAttenuation = BounceAttenuation * BRDF * CosineAttenuation / PDF;
+                BounceAttenuation *= BRDF * CosineAttenuation / PDF;
 
                 Ray = Scattered;
 
@@ -212,7 +212,7 @@ basic_renderer::trace_ray(ray Ray, const scene& Scene, rng& Rng) const
 
                 // (nearest might be okay here since we trace multiple rays per pixel)
                 vec3 EnvironmentColor = Scene.EnvironmentMap->sample_texel_nearest(u, v);
-                ResultColor = ResultColor + (BounceAttenuation * EnvironmentColor * Scene.EnvironmentMultiplier);
+                ResultColor += BounceAttenuation * EnvironmentColor * Scene.EnvironmentMultiplier;
             }
 
             break;
