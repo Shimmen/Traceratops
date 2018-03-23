@@ -26,6 +26,13 @@ struct camera
     }
     ~camera() = default;
 
+    ray get_jittered_ray(int x, int y, int ImageWidth, int ImageHeight, rng& Rng) const
+    {
+        float u = (x + 0.5f + 0.5f * Rng.random_neg11()) / ImageWidth;
+        float v = (y + 0.5f + 0.5f * Rng.random_neg11()) / ImageHeight;
+        return get_ray(u, v, Rng);
+    }
+
     ray get_ray(float u, float v, rng& Rng) const
     {
         ray Ray{};

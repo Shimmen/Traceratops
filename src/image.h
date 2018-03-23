@@ -19,7 +19,7 @@ public:
 
     void set_pixel(int x, int y, uint32_t Pixel);
 
-    void update_window(bool WaitForExit = false) const;
+    void update_window(bool WaitForExit = false, const char *StatusMessage = nullptr) const;
     void write_to_png(const std::string& FileName) const;
 
 private:

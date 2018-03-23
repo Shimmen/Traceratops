@@ -34,7 +34,7 @@ image::set_pixel(int x, int y, uint32_t Pixel)
 }
 
 void
-image::update_window(bool WaitForExit) const
+image::update_window(bool WaitForExit, const char *StatusMessage) const
 {
     // TODO: Seems to compensate for the retina screen..?
     glPixelZoom(2.0f, 2.0f);
@@ -44,6 +44,11 @@ image::update_window(bool WaitForExit) const
 
     glfwSwapBuffers(Window);
     glfwPollEvents();
+
+    if (StatusMessage)
+    {
+        glfwSetWindowTitle(Window, StatusMessage);
+    }
 
     if (WaitForExit)
     {

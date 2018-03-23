@@ -29,10 +29,7 @@ void basic_renderer::render_scene(const scene &Scene, const camera &Camera, imag
             vec3 AccumulatedHdrColor = vec3{};
             for (int i = 0; i < RaysPerPixel; ++i)
             {
-                // (jittered UVs)
-                float u = (x + 0.5f + 0.5f * Rng.random_neg11()) / Image.Width;
-                float v = (y + 0.5f + 0.5f * Rng.random_neg11()) / Image.Height;
-                const ray& Ray = Camera.get_ray(u, v, Rng);
+                const ray& Ray = Camera.get_jittered_ray(x, y, Image.Width, Image.Height, Rng);
 
                 Timer.new_iteration();
                 vec3 Color = trace_ray(Ray, Scene, Rng);

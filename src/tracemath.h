@@ -381,6 +381,11 @@ public:
         engine.seed(seed);
     }
 
+    explicit rng(unsigned int seed)
+    {
+        engine.seed(seed);
+    }
+
     inline float random_01()
     {
         return uniform_01_dist(engine);
