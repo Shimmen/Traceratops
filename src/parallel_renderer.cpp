@@ -47,11 +47,10 @@ void parallel_renderer::render_tiles(const parallel_renderer *Renderer, work_con
             const image *Image = WorkContext->generate_image_at_current_state(&AverageSamples);
 
             char StatusMessage[1024];
-            sprintf(StatusMessage, "%f%% done (~%.1f samples per pixel)\r", PercentDone, AverageSamples);
+            sprintf(StatusMessage, "%.2f%% done (~%.1f SPP)", PercentDone, AverageSamples);
 
             Image->update_window(false, StatusMessage);
-
-            printf("%.2f%% done (~%.1f SPP)\r", PercentDone, AverageSamples);
+            printf("%s\r", StatusMessage);
         }
     }
 }
