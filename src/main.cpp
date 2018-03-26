@@ -15,7 +15,7 @@ std::unique_ptr<scene> create_and_setup_scene()
     Scene->EnvironmentMap = std::unique_ptr<texture>(new texture{"assets/environment.hdr"});
     Scene->EnvironmentMultiplier = 0.3f;
 
-    Scene->register_triangle_mesh("assets/cornell_box/CornellBox-Original.obj", vec3{0.0f, 0.0f, 0.0f});
+    Scene->register_triangle_mesh("assets/cornell_box/", "CornellBox-Original.obj", vec3{0.0f, 0.0f, 0.0f});
 
     int DiffuseRedMaterial  = Scene->register_material(new lambertian{vec3{1.0, 0.1, 0.1}});
     int GreenMetalMaterial  = Scene->register_material(new metal{vec3{0.4, 1.0, 0.4}, 0.2f});
@@ -95,7 +95,7 @@ std::unique_ptr<scene> create_and_setup_scene()
 
 int main()
 {
-#define QUALITY 3
+#define QUALITY 1
 
 #if QUALITY == 0
     image Image{1080, 1080};

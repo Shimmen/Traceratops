@@ -17,8 +17,8 @@ struct camera
         // Create camera basis (note that the camera looks down +W)
         // I.e, I use a LEFT HANDED COORDINATE SYSTEM!!! Don't forget this!
         W = normalize(LookAt - Origin);
-        U = normalize(cross(Up, W));
-        V = normalize(cross(W, U));
+        U = normalize(cross(W, Up));
+        V = normalize(cross(U, W));
 
         LowerLeft = Origin - HalfWidth * FocusDistance * U - HalfHeight * FocusDistance * V + FocusDistance * W;
         Horizontal = 2.0f * HalfWidth * FocusDistance * U;

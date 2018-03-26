@@ -53,7 +53,7 @@ scene::add_hitable(hitable *Hitable)
 }
 
 void
-scene::register_triangle_mesh(const std::string& ObjFileName, const vec3& Translation)
+scene::register_triangle_mesh(const std::string& Directory, const std::string& ObjFileName, const vec3& Translation)
 {
     invalidate_current_bvh();
 
@@ -61,11 +61,10 @@ scene::register_triangle_mesh(const std::string& ObjFileName, const vec3& Transl
     std::vector<tinyobj::shape_t> Shapes;
     std::vector<tinyobj::material_t> Materials;
 
-    // TODO/FIXME!
-    const char * MtlBase = "assets/cornell_box/";
+    auto Path = Directory + ObjFileName;
 
     std::string Error;
-    bool Success = tinyobj::LoadObj(&Attributes, &Shapes, &Materials, &Error, ObjFileName.c_str(), MtlBase, true);
+    bool Success = tinyobj::LoadObj(&Attributes, &Shapes, &Materials, &Error, Path.c_str(), Directory.c_str(), true);
 
     if (!Error.empty())
     {
