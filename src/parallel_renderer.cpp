@@ -89,12 +89,12 @@ void parallel_renderer::render_scene(const scene &Scene, const camera &Camera, i
     std::vector<std::thread> Threads{};
     for (int i = 1; i < NumThreadsToUse; ++i)
     {
-        auto Rng = new rng{BaseSeed + i};
+        thread_local auto Rng = new rng{BaseSeed + i};
         Threads.emplace_back(parallel_renderer::render_tiles, this, WorkContext, Rng, false);
     }
 
     // Assign the work leader to the main thread and join all others when finished
-    auto ThisThreadRng = new rng{BaseSeed};
+    thread_local auto ThisThreadRng = new rng{BaseSeed};
     render_tiles(this, WorkContext, ThisThreadRng, true);
     for (auto& Thread: Threads) Thread.join();
 
@@ -106,9 +106,9 @@ void parallel_renderer::render_scene(const scene &Scene, const camera &Camera, i
 
     printf("-------------\n--- stats ---\n-------------\n");
     printf(" - total time elapsed = %.3fs\n", Timer.get_seconds_elapsed());
-    printf(" - average time elapsed per ray = %lldns\n", Timer.get_nanoseconds_elapsed_per_iteration());
-    printf(" - mega paths (+light rays) / second = %.3f\n", Timer.get_mega_iterations_per_second());
-    printf(" - Mrays/s = %.3f\n", Timer.get_mega_iterations_per_second() * 16.0);
+    //printf(" - average time elapsed per ray = %lldns\n", Timer.get_nanoseconds_elapsed_per_iteration());
+    //printf(" - mega paths (+light rays) / second = %.3f\n", Timer.get_mega_iterations_per_second());
+    //printf(" - Mrays/s = %.3f\n", Timer.get_mega_iterations_per_second() * 16.0);
     printf("-------------\n");
 
 }
@@ -154,7 +154,7 @@ parallel_renderer::trace_ray(ray Ray, const scene& Scene, rng& Rng) const
     {
         if (get_first_intersection(Scene, Ray, 0.001f, INFINITY, &Hit))
         {
-            const material& Material = Scene.get_material(Hit.Material);
+            const material& Material = Scene.get_material(Hit.Hitable->Material);
 
             // Add direct light shining directly from a light source to the camera
             if (CurrentDepth == 0)

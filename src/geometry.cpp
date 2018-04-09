@@ -36,9 +36,7 @@ bool sphere::intersect(const ray &Ray, float TMin, float TMax, hit_info& Hit) co
         Hit.Point = Ray.Origin + t * Ray.Direction;
         Hit.Normal = normalize(Hit.Point - C);
 
-        Hit.Material = Material;
         Hit.Hitable = this;
-
         return true;
     }
 
@@ -74,9 +72,7 @@ bool disc::intersect(const ray &Ray, float TMin, float TMax, hit_info &Hit) cons
         {
             Hit.Normal = N;
 
-            Hit.Material = Material;
             Hit.Hitable = this;
-
             return true;
         }
     }
@@ -135,11 +131,16 @@ bool triangle::intersect(const ray& Ray, float TMin, float TMax, hit_info& Hit) 
     {
         Hit.Distance = t;
         Hit.Point = Ray.Origin + (Ray.Direction * t);
-        Hit.Normal = N; // TODO: Use smooth face normal using barycentric coords!
 
-        Hit.Material = Material;
+        // TODO: This works... What's up with the order though?
+        vec3 Barycentric{b[2], b[0], b[1]};
+
+        // TODO: Use smooth face normal using barycentric coords!
+        Hit.Normal = N;
+
+        Hit.TextureCoordinate = Barycentric[0] * UV0 + Barycentric[1] * UV1 + Barycentric[2] * UV2;
+
         Hit.Hitable = this;
-
         return true;
     }
 

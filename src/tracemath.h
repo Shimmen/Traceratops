@@ -24,7 +24,7 @@ float square(float x)
 }
 
 ///////////////////////////////////////////////////////////////
-// vectors
+// vec2
 
 struct vec2
 {
@@ -36,6 +36,27 @@ struct vec2
     vec2(const vec2& other) = default;
     vec2(float x, float y) : x(x), y(y) {};
 };
+
+static inline
+vec2 operator+(const vec2& a, const vec2& b)
+{
+    return vec2{a.x + b.x, a.y + b.y};
+}
+
+static inline
+vec2 operator*(const vec2& a, float s)
+{
+    return vec2{a.x * s, a.y * s};
+}
+
+static inline
+vec2 operator*(float s, const vec2& a)
+{
+    return a * s;
+}
+
+///////////////////////////////////////////////////////////////
+// vec3
 
 struct vec3
 {

@@ -53,7 +53,7 @@ scene::add_hitable(hitable *Hitable)
 }
 
 void
-scene::register_triangle_mesh(const std::string& Directory, const std::string& ObjFileName, const vec3& Translation)
+scene::register_triangle_mesh(const std::string& Directory, const std::string& ObjFileName, const vec3& Translation, float Scale)
 {
     invalidate_current_bvh();
 
@@ -92,16 +92,25 @@ scene::register_triangle_mesh(const std::string& Directory, const std::string& O
         float SpecularAmount = dot(SpecularColor, vec3{1});
 
         material *Material;
-        if (DiffuseAmount > SpecularAmount)
+
+        if (!ObjMaterial.diffuse_texname.empty())
         {
-            Material = new lambertian{DiffuseColor, Emission};
+            auto DiffuseTexture = new texture{Directory + ObjMaterial.diffuse_texname};
+            Material = new lambertian_textured{DiffuseTexture};
         }
         else
         {
-            Material = new metal{SpecularColor, 0, Emission};
+            if (DiffuseAmount > SpecularAmount)
+            {
+                Material = new lambertian{DiffuseColor, Emission};
+            }
+            else
+            {
+                Material = new metal{SpecularColor, 0, Emission};
+            }
         }
-        int MaterialIndex = register_material(Material);
 
+        int MaterialIndex = register_material(Material);
         MaterialIndexMap.push_back(MaterialIndex);
     }
 
@@ -113,7 +122,8 @@ scene::register_triangle_mesh(const std::string& Directory, const std::string& O
         {
             assert(Shape.mesh.num_face_vertices[FaceIndex] == 3);
 
-            vec3 TriangleVertices[3];
+            vec3 Verts[3];
+            vec2 UVs[3];
 
             // Loop over the vertices in the face
             for (size_t VertexIndex = 0; VertexIndex < 3; ++VertexIndex)
@@ -122,38 +132,33 @@ scene::register_triangle_mesh(const std::string& Directory, const std::string& O
 
                 // TODO: Later remove the translation part and implement proper transformations!
 
-                TriangleVertices[VertexIndex] = vec3{
-                    Attributes.vertices[3 * idx.vertex_index + 0] + Translation.x,
-                    Attributes.vertices[3 * idx.vertex_index + 1] + Translation.y,
-                    Attributes.vertices[3 * idx.vertex_index + 2] + Translation.z
-                };
-/*
-                TriangleFace.Normals[VertexIndex] = vec3{
-                    Attributes.normals[3 * idx.normal_index + 0],
-                    Attributes.normals[3 * idx.normal_index + 1],
-                    Attributes.normals[3 * idx.normal_index + 2]
+                Verts[VertexIndex] = vec3{
+                    Attributes.vertices[3 * idx.vertex_index + 0] * Scale + Translation.x,
+                    Attributes.vertices[3 * idx.vertex_index + 1] * Scale + Translation.y,
+                    Attributes.vertices[3 * idx.vertex_index + 2] * Scale + Translation.z
                 };
 
                 if (Attributes.texcoords.size() >= 2 * idx.texcoord_index)
                 {
-                    TriangleFace.UVs[VertexIndex] = vec2{
+                    UVs[VertexIndex] = vec2{
                         Attributes.texcoords[2 * idx.texcoord_index + 0],
                         Attributes.texcoords[2 * idx.texcoord_index + 1]
                     };
                 }
-                else
-                {
-                    TriangleFace.UVs[VertexIndex] = vec2{
-                        -1.0f, -1.0f
-                    };
-                }
+
+/*
+                TriangleFace.Normals[VertexIndex] = vec3{
+                        Attributes.normals[3 * idx.normal_index + 0],
+                        Attributes.normals[3 * idx.normal_index + 1],
+                        Attributes.normals[3 * idx.normal_index + 2]
+                };
 */
             }
 
             int ObjFaceMaterialIndex = Shape.mesh.material_ids[FaceIndex];
             int FaceMaterial = MaterialIndexMap[ObjFaceMaterialIndex];
 
-            auto *Triangle = new triangle{TriangleVertices[0], TriangleVertices[1], TriangleVertices[2], FaceMaterial};
+            auto *Triangle = new triangle{Verts[0], Verts[1], Verts[2], UVs[0], UVs[1], UVs[2], FaceMaterial};
             add_hitable(Triangle);
 
         }

@@ -3,6 +3,7 @@
 
 #include "tracemath.h"
 #include "geometry.h"
+#include "texture.h"
 
 struct material
 {
@@ -25,8 +26,19 @@ struct lambertian: public material
 
     explicit lambertian(const vec3& Albedo, float Emittance = 0);
 
-    virtual vec3 brdf(const vec3& Wi, const vec3& Wo, const hit_info& Hit, rng& Rng) const;
-    virtual bool calculate_scattered(const ray& IncomingRay, hit_info& Hit, rng& Rng, ray& ScatteredRay, float& Pdf) const;
+    virtual vec3 brdf(const vec3& Wi, const vec3& Wo, const hit_info& Hit, rng& Rng) const override;
+    virtual bool calculate_scattered(const ray& IncomingRay, hit_info& Hit, rng& Rng, ray& ScatteredRay, float& Pdf) const override;
+
+};
+
+struct lambertian_textured: public material
+{
+    const texture *DiffuseTexture;
+
+    explicit lambertian_textured(const texture *DiffuseTexture);
+
+    vec3 brdf(const vec3& Wi, const vec3& Wo, const hit_info& Hit, rng& Rng) const override;
+    bool calculate_scattered(const ray& IncomingRay, hit_info& Hit, rng& Rng, ray& ScatteredRay, float& Pdf) const override;
 
 };
 
@@ -37,8 +49,8 @@ struct metal: public material
 
     metal(const vec3& Albedo, float Fuzz, float Emittance = 0);
 
-    vec3 brdf(const vec3& Wi, const vec3& Wo, const hit_info& Hit, rng& Rng) const;
-    virtual bool calculate_scattered(const ray& IncomingRay, hit_info& Hit, rng& Rng, ray& ScatteredRay, float& Pdf) const;
+    vec3 brdf(const vec3& Wi, const vec3& Wo, const hit_info& Hit, rng& Rng) const override;
+    bool calculate_scattered(const ray& IncomingRay, hit_info& Hit, rng& Rng, ray& ScatteredRay, float& Pdf) const override;
 
 };
 
@@ -48,8 +60,8 @@ struct dielectric: public material
 
     explicit dielectric(float IndexOfRefraction) : IndexOfRefraction(IndexOfRefraction) {}
 
-    virtual vec3 brdf(const vec3& Wi, const vec3& Wo, const hit_info& Hit, rng& Rng) const;
-    virtual bool calculate_scattered(const ray& IncomingRay, hit_info& Hit, rng& Rng, ray& ScatteredRay, float& Pdf) const;
+    vec3 brdf(const vec3& Wi, const vec3& Wo, const hit_info& Hit, rng& Rng) const override;
+    bool calculate_scattered(const ray& IncomingRay, hit_info& Hit, rng& Rng, ray& ScatteredRay, float& Pdf) const override;
 
 };
 

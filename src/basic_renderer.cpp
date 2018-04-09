@@ -106,7 +106,7 @@ basic_renderer::trace_ray(ray Ray, const scene& Scene, rng& Rng) const
     {
         if (get_first_intersection(Scene, Ray, 0.001f, INFINITY, &Hit))
         {
-            const material& Material = Scene.get_material(Hit.Material);
+            const material& Material = Scene.get_material(Hit.Hitable->Material);
 
             // Add direct light shining directly from a light source to the camera
             if (CurrentDepth == 0)

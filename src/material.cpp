@@ -27,6 +27,33 @@ bool lambertian::calculate_scattered(const ray& IncomingRay, hit_info& Hit, rng&
     return true;
 }
 
+lambertian_textured::lambertian_textured(const texture *DiffuseTexture)
+        : DiffuseTexture(DiffuseTexture)
+{
+}
+
+vec3 lambertian_textured::brdf(const vec3& Wi, const vec3& Wo, const hit_info& Hit, rng& Rng) const
+{
+    bool Absorb = dot(Wi, Hit.Normal) <= 0.0f;
+    bool NotSameHemisphere = !on_same_hemisphere(Wi, Wo, Hit.Normal);
+    if (Absorb || NotSameHemisphere) return vec3{0.0f};
+
+    vec2 UV = Hit.TextureCoordinate;
+    vec3 Albedo = DiffuseTexture->sample_texel_linear(UV.x, UV.y);
+    return Albedo / tracemath::PI;
+}
+
+bool lambertian_textured::calculate_scattered(const ray& IncomingRay, hit_info& Hit, rng& Rng, ray& ScatteredRay, float& Pdf) const
+{
+    ScatteredRay.Origin = Hit.Point;
+
+    // (Cosine weighted sampling)
+    ScatteredRay.Direction = normalize(Hit.Normal + Rng.random_in_unit_sphere());
+    Pdf = dot(ScatteredRay.Direction, Hit.Normal) / tracemath::PI;
+
+    return true;
+}
+
 metal::metal(const vec3& Albedo, float Fuzz, float Emittance)
         : Albedo{Albedo}, Fuzz{Fuzz}
 {
