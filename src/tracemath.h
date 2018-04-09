@@ -32,7 +32,7 @@ struct vec2
     float y;
 
     vec2() = default;
-    vec2(vec2& other) = default;
+    //vec2(vec2& other) = default;
     vec2(const vec2& other) = default;
     vec2(float x, float y) : x(x), y(y) {};
 };
@@ -65,7 +65,7 @@ struct vec3
     float z;
 
     vec3() = default;
-    vec3(vec3& other) = default;
+    //vec3(vec3& other) = default;
     vec3(const vec3& other) = default;
     vec3(float x, float y, float z) : x(x), y(y), z(z) {}
     explicit vec3(float val) : x(val), y(val), z(val) {}

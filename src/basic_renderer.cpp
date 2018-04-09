@@ -22,9 +22,9 @@ void basic_renderer::render_scene(const scene &Scene, const camera &Camera, imag
     timer Timer{};
 
     Timer.start();
-    for (uint32_t y = 0; y < Image.Height; ++y)
+    for (int y = 0; y < Image.Height; ++y)
     {
-        for (uint32_t x = 0; x < Image.Width; ++x)
+        for (int x = 0; x < Image.Width; ++x)
         {
             vec3 AccumulatedHdrColor = vec3{};
             for (int i = 0; i < RaysPerPixel; ++i)

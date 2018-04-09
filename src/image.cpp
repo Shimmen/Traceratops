@@ -36,8 +36,10 @@ image::set_pixel(int x, int y, uint32_t Pixel)
 void
 image::update_window(bool WaitForExit, const char *StatusMessage) const
 {
-    // TODO: Seems to compensate for the retina screen..?
-    glPixelZoom(2.0f, 2.0f);
+#if __APPLE__
+	// Seems to be needed on macs. Maybe something to do with retina screens?
+	glPixelZoom(2.0f, 2.0f);
+#endif
 
     glDrawPixels(Width, Height, GL_RGBA, GL_UNSIGNED_BYTE, Pixels.data());
     assert(glGetError() == GL_NO_ERROR);
