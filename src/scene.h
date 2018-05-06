@@ -8,13 +8,14 @@
 #include "texture.h"
 #include "geometry.h"
 #include "material.h"
-#include "triangle_mesh.h"
+#include "triangle.h"
 #include "bvh.h"
-
 
 class scene
 {
 public:
+
+    static const scene& get_current() { return *CurrentScene; };
 
     scene();
     virtual ~scene();
@@ -38,11 +39,11 @@ public:
 
     std::vector<const material *> RegisteredMaterials;
 
-    //std::vector<vec3> TriangleVertices;
-    //std::vector<triangle_face> TriangleFaces;
-    //std::vector<triangle_mesh> TriangleMeshes;
+    std::vector<triangle_face> TriangleFaces;
 
 private:
+
+    static scene *CurrentScene;
 
     void invalidate_current_bvh();
 

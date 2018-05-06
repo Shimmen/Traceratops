@@ -1,4 +1,5 @@
 #include "geometry.h"
+#include "scene.h"
 
 static const float IntersectionTolerance = 0.0001f;
 
@@ -132,13 +133,26 @@ bool triangle::intersect(const ray& Ray, float TMin, float TMax, hit_info& Hit) 
         Hit.Distance = t;
         Hit.Point = Ray.Origin + (Ray.Direction * t);
 
+        const scene& Scene = scene::get_current();
+        triangle_face Face = Scene.TriangleFaces[FaceIndex];
+
         // TODO: This works... What's up with the order though?
         vec3 Barycentric{b[2], b[0], b[1]};
 
-        // TODO: Use smooth face normal using barycentric coords!
-        Hit.Normal = N;
+        if (Face.HasNormals)
+        {
+            Hit.Normal = normalize(Barycentric[0] * Face.Normals[0] + Barycentric[1] * Face.Normals[1] + Barycentric[2] * Face.Normals[2]);
+        }
+        else
+        {
+            // Use actual/mathematical face normal
+            Hit.Normal = N;
+        }
 
-        Hit.TextureCoordinate = Barycentric[0] * UV0 + Barycentric[1] * UV1 + Barycentric[2] * UV2;
+        if (Face.HasUVs)
+        {
+            Hit.TextureCoordinate = Barycentric[0] * Face.UVs[0] + Barycentric[1] * Face.UVs[1] + Barycentric[2] * Face.UVs[2];
+        }
 
         Hit.Hitable = this;
         return true;

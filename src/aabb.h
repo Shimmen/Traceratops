@@ -2,7 +2,6 @@
 #define TRACERATOPS_AABB_H
 
 #include "tracemath.h"
-#include "triangle_mesh.h"
 
 struct aabb
 {

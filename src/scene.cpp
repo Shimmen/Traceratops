@@ -7,6 +7,8 @@
 
 using namespace tracemath;
 
+scene *scene::CurrentScene = nullptr;
+
 scene::scene()
 {
     // Register default material (index 0)
@@ -122,8 +124,9 @@ scene::register_triangle_mesh(const std::string& Directory, const std::string& O
         {
             assert(Shape.mesh.num_face_vertices[FaceIndex] == 3);
 
-            vec3 Verts[3];
-            vec2 UVs[3];
+            size_t GlobalFaceIndex = TriangleFaces.size();
+            TriangleFaces.emplace_back();
+            triangle_face& Face = TriangleFaces[GlobalFaceIndex];
 
             // Loop over the vertices in the face
             for (size_t VertexIndex = 0; VertexIndex < 3; ++VertexIndex)
@@ -132,33 +135,36 @@ scene::register_triangle_mesh(const std::string& Directory, const std::string& O
 
                 // TODO: Later remove the translation part and implement proper transformations!
 
-                Verts[VertexIndex] = vec3{
+                Face.Vertices[VertexIndex] = vec3{
                     Attributes.vertices[3 * idx.vertex_index + 0] * Scale + Translation.x,
                     Attributes.vertices[3 * idx.vertex_index + 1] * Scale + Translation.y,
                     Attributes.vertices[3 * idx.vertex_index + 2] * Scale + Translation.z
                 };
 
-                if (Attributes.texcoords.size() >= 2 * idx.texcoord_index)
+                if (idx.normal_index != -1)
                 {
-                    UVs[VertexIndex] = vec2{
+                    Face.HasNormals = true;
+                    Face.Normals[VertexIndex] = vec3{
+                        Attributes.normals[3 * idx.normal_index + 0],
+                        Attributes.normals[3 * idx.normal_index + 1],
+                        Attributes.normals[3 * idx.normal_index + 2]
+                    };
+                }
+
+                if (idx.texcoord_index != -1)
+                {
+                    Face.HasUVs = true;
+                    Face.UVs[VertexIndex] = vec2{
                         Attributes.texcoords[2 * idx.texcoord_index + 0],
                         Attributes.texcoords[2 * idx.texcoord_index + 1]
                     };
                 }
-
-/*
-                TriangleFace.Normals[VertexIndex] = vec3{
-                        Attributes.normals[3 * idx.normal_index + 0],
-                        Attributes.normals[3 * idx.normal_index + 1],
-                        Attributes.normals[3 * idx.normal_index + 2]
-                };
-*/
             }
 
             int ObjFaceMaterialIndex = Shape.mesh.material_ids[FaceIndex];
             int FaceMaterial = MaterialIndexMap[ObjFaceMaterialIndex];
 
-            auto *Triangle = new triangle{Verts[0], Verts[1], Verts[2], UVs[0], UVs[1], UVs[2], FaceMaterial};
+            auto *Triangle = new triangle{Face.Vertices[0], Face.Vertices[1], Face.Vertices[2], GlobalFaceIndex, FaceMaterial};
             add_hitable(Triangle);
 
         }
@@ -174,6 +180,8 @@ scene::prepare_for_rendering()
     hitable **HitablesArray = Hitables.data();
     size_t  HitablesCount = Hitables.size();
     BVHRootNode = new bvh_node(HitablesArray, HitablesCount);
+
+    scene::CurrentScene = this;
 
     printf("... done preparing scene\n");
 }
