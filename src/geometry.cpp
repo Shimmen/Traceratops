@@ -173,13 +173,13 @@ bool triangle::get_aabb(aabb& AABB) const
 
     // Expand AABB so we don't miss very AA-wise-thin triangles
 
-    AABB.Min.x -= 0.01f;
-    AABB.Min.y -= 0.01f;
-    AABB.Min.z -= 0.01f;
+    AABB.Min.x -= 0.001f;
+    AABB.Min.y -= 0.001f;
+    AABB.Min.z -= 0.001f;
 
-    AABB.Max.x += 0.01f;
-    AABB.Max.y += 0.01f;
-    AABB.Max.z += 0.01f;
+    AABB.Max.x += 0.001f;
+    AABB.Max.y += 0.001f;
+    AABB.Max.z += 0.001f;
 
     return true;
 }

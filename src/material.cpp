@@ -148,3 +148,93 @@ bool dielectric::calculate_scattered(const ray& IncomingRay, hit_info& Hit, rng&
 
     return true;
 }
+
+
+vec3 microfacet::brdf(const vec3& Wi, const vec3& Wo, const hit_info& Hit, rng& Rng) const
+{
+    float u = Hit.TextureCoordinate.x;
+    float v = Hit.TextureCoordinate.y;
+
+    float Metalness = MetalnessTexture->sample_texel_linear(u, v).x;
+
+    // Calculate base Fresnell from how metal the material is (yes, not totally physically based)
+    float R0 = lerp(0.2f, 0.95f, Metalness);
+
+    vec3 Wh = normalize(Wi + Wo);
+    float FresnelCos = std::max(0.0f, dot(Wh, Wi));
+
+    float F = schlick_fresnell_base(FresnelCos, R0);
+    float G = shadowing_function(Wi, Wo, Hit);
+    float D = cook_torrance_microfacet_distibution(Wi, Wo, Hit);
+    float LdotN = std::max(0.0f, dot(Hit.Normal, Wi));
+    float VdotN = std::max(0.0f, dot(Hit.Normal, Wo));
+    float Epsilon = 0.05f;
+    float BRDF = (F * G * D) / clamp(4.0f * (VdotN * LdotN + Epsilon), 0, 1);
+
+    vec3 Albedo = DiffuseTexture->sample_texel_linear(u, v);
+    vec3 MicrofacetPart = BRDF * Albedo;
+    vec3 DiffusePart = (1.0f / tracemath::PI) * Albedo;
+    return (1.0f - F) * (1.0f - Metalness) * DiffusePart + MicrofacetPart;
+
+    //return DiffuseTexture->sample_texel_linear(u, v);
+    //return vec3(F);
+    //return vec3(G);
+    //return vec3(D);
+    //if (BRDF >= 0.9f) return vec3(1, 0, 1);
+    //return vec3(BRDF);
+}
+
+bool microfacet::calculate_scattered(const ray& IncomingRay, hit_info& Hit, rng& Rng, ray& ScatteredRay, float& Pdf) const
+{
+    ScatteredRay.Origin = Hit.Point;
+
+    // TODO: Importance sample!
+    // Generate a random point/direction on the hemisphere
+    do
+    {
+        ScatteredRay.Direction = Rng.random_in_unit_sphere();
+    }
+    while (dot(ScatteredRay.Direction, Hit.Normal) < 0.0f);
+
+    // The most significant part of the Cook-Torrance model is the D-term, i.e  the microfacet distribution. Therefore
+    // we importance sample against it and calculate the PDF though it.
+    //Pdf = cook_torrance_microfacet_distibution(ScatteredRay.Direction, -IncomingRay.Direction, Hit);
+
+    Pdf = 1.0f;
+
+    // Lambert importance sampling
+    //ScatteredRay.Direction = normalize(Hit.Normal + Rng.random_in_unit_sphere());
+    //Pdf = dot(ScatteredRay.Direction, Hit.Normal) / tracemath::PI;
+
+    return true;
+}
+
+float microfacet::shadowing_function(const vec3& Wi, const vec3& Wo, const hit_info& Hit) const
+{
+    // Cook-Torrance geometry function:
+    vec3 Wh = normalize(Wi + Wo);
+    float OutPart = dot(Hit.Normal, Wh) * dot(Hit.Normal, Wo) / dot(Wo, Wh);
+    float InPart  = dot(Hit.Normal, Wh) * dot(Hit.Normal, Wi) / dot(Wo, Wh);
+    //return std::min(1.0f, std::min(2.0f * InPart, 2.0f * OutPart));
+
+    // TODO!
+    return 1.0f;
+}
+
+float microfacet::cook_torrance_microfacet_distibution(const vec3 &Wi, const vec3 &Wo, const hit_info &Hit) const
+{
+    float Roughness = RoughnessTexture->sample_texel_linear(Hit.TextureCoordinate.x, Hit.TextureCoordinate.y).x;
+
+    vec3 Wh = normalize(Wi + Wo);
+
+    // TODO: Fix this mapping to shininess, it's not very good.
+    float Shininess = 1.0f - Roughness;
+
+    return ((Shininess + 2.0f) / tracemath::TWO_PI) * powf(dot(Hit.Normal, Wh), Shininess);
+
+    //float m_Sq = Roughness * Roughness;
+    //float NdotH_Sq = std::max(0.0f, dot(Hit.Normal, Wh));
+    //NdotH_Sq = NdotH_Sq * NdotH_Sq;
+    //return std::exp((NdotH_Sq - 1.0f) / (m_Sq*NdotH_Sq)) / (3.14159265f * m_Sq * NdotH_Sq * NdotH_Sq);
+}
+

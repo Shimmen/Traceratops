@@ -65,4 +65,25 @@ struct dielectric: public material
 
 };
 
+
+
+struct microfacet: public material
+{
+    const texture *DiffuseTexture;
+    const texture *RoughnessTexture;
+    const texture *MetalnessTexture;
+
+    microfacet(const texture *Diffuse, const texture *Roughness, const texture *Metalness)
+        : DiffuseTexture(Diffuse), RoughnessTexture(Roughness), MetalnessTexture(Metalness) {}
+
+    vec3 brdf(const vec3& Wi, const vec3& Wo, const hit_info& Hit, rng& Rng) const override;
+    bool calculate_scattered(const ray& IncomingRay, hit_info& Hit, rng& Rng, ray& ScatteredRay, float& Pdf) const override;
+
+private:
+
+    float shadowing_function(const vec3& Wi, const vec3& Wo, const hit_info& Hit) const;
+    float cook_torrance_microfacet_distibution(const vec3 &Wi, const vec3 &Wo, const hit_info &Hit) const;
+
+};
+
 #endif // TRACERATOPS_MATERIAL_H

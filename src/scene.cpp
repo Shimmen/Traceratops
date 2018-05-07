@@ -55,7 +55,7 @@ scene::add_hitable(hitable *Hitable)
 }
 
 void
-scene::register_triangle_mesh(const std::string& Directory, const std::string& ObjFileName, const vec3& Translation, float Scale)
+scene::register_triangle_mesh(const std::string& Directory, const std::string& ObjFileName, const vec3& Translation, float Scale, float yRotation)
 {
     invalidate_current_bvh();
 
@@ -95,7 +95,16 @@ scene::register_triangle_mesh(const std::string& Directory, const std::string& O
 
         material *Material;
 
-        if (!ObjMaterial.diffuse_texname.empty())
+        if (!ObjMaterial.diffuse_texname.empty() && !ObjMaterial.roughness_texname.empty() && !ObjMaterial.metallic_texname.empty())
+        {
+            // This seems to be some physically based textured object
+            auto DiffuseTexture = new texture{Directory + ObjMaterial.diffuse_texname};
+            auto RoughnessTexture = new texture{Directory + ObjMaterial.roughness_texname};
+            auto MetalnessTexture = new texture{Directory + ObjMaterial.metallic_texname};
+            Material = new microfacet{DiffuseTexture, RoughnessTexture, MetalnessTexture};
+
+        }
+        else if (!ObjMaterial.diffuse_texname.empty())
         {
             auto DiffuseTexture = new texture{Directory + ObjMaterial.diffuse_texname};
             Material = new lambertian_textured{DiffuseTexture};
@@ -116,6 +125,9 @@ scene::register_triangle_mesh(const std::string& Directory, const std::string& O
         MaterialIndexMap.push_back(MaterialIndex);
     }
 
+    // Covert to radians
+    yRotation = yRotation / 180.0f * PI;
+
     // Add shapes as separate triangle meshes
     for (auto& Shape: Shapes)
     {
@@ -133,12 +145,15 @@ scene::register_triangle_mesh(const std::string& Directory, const std::string& O
             {
                 tinyobj::index_t idx = Shape.mesh.indices[3 * FaceIndex + VertexIndex];
 
-                // TODO: Later remove the translation part and implement proper transformations!
+                float x = Attributes.vertices[3 * idx.vertex_index + 0];
+                float y = Attributes.vertices[3 * idx.vertex_index + 1];
+                float z = Attributes.vertices[3 * idx.vertex_index + 2];
 
+                // TODO: Implement proper transformations!
                 Face.Vertices[VertexIndex] = vec3{
-                    Attributes.vertices[3 * idx.vertex_index + 0] * Scale + Translation.x,
-                    Attributes.vertices[3 * idx.vertex_index + 1] * Scale + Translation.y,
-                    Attributes.vertices[3 * idx.vertex_index + 2] * Scale + Translation.z
+                    (cosf(yRotation) * x - sinf(yRotation) * z) * Scale + Translation.x,
+                    y * Scale + Translation.y,
+                    (sinf(yRotation) * x + cosf(yRotation) * z) * Scale + Translation.z
                 };
 
                 if (idx.normal_index != -1)

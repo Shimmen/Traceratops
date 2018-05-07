@@ -3,6 +3,7 @@
 #include "image.h"
 #include "scene.h"
 #include "camera.h"
+#include "debug_renderer.h"
 #include "basic_renderer.h"
 #include "parallel_renderer.h"
 
@@ -15,9 +16,10 @@ std::unique_ptr<scene> create_and_setup_scene()
     Scene->EnvironmentMap = std::unique_ptr<texture>(new texture{"assets/environment.hdr"});
     Scene->EnvironmentMultiplier = 0.3f;
 
-    Scene->register_triangle_mesh("assets/cornell_box/", "CornellBox-Original.obj", vec3{0.0f, 0.0f, 0.0f});
-    Scene->register_triangle_mesh("assets/quad/", "quad.obj", vec3{0.0f, 1.0f, -0.99f}, 2.0f);
-    Scene->register_triangle_mesh("assets/teapot/", "teapot.obj", vec3{0.20f, 0.56f, 0.21f}, 0.01f);
+    Scene->register_triangle_mesh("assets/cornell_box/", "CornellBox-Empty.obj", vec3{0.0f, 0.0f, 1.0f}, 1.4f);
+    //Scene->register_triangle_mesh("assets/quad/", "quad.obj", vec3{0.0f, 1.0f, -0.99f}, 2.0f);
+    //Scene->register_triangle_mesh("assets/teapot/", "teapot.obj", vec3{0.20f, 0.56f, 0.21f}, 0.01f);
+    Scene->register_triangle_mesh("assets/cerberus/", "cerberus.obj", vec3{0.9f, 1.3f, 0.2f}, 1.7f, -90.0f);
 
     int DiffuseRedMaterial  = Scene->register_material(new lambertian{vec3{1.0, 0.1, 0.1}});
     int GreenMetalMaterial  = Scene->register_material(new metal{vec3{0.4, 1.0, 0.4}, 0.2f});
@@ -97,7 +99,7 @@ std::unique_ptr<scene> create_and_setup_scene()
 
 int main()
 {
-#define QUALITY 1
+#define QUALITY 3
 
 #if QUALITY == 0
     image Image{1080, 1080};
@@ -115,6 +117,10 @@ int main()
     image Image{200, 200};
     int RaysPerPixel = 16;
     int RayMaxDepth = 4;
+#elif QUALITY == 4
+    image Image{400, 400};
+    int RaysPerPixel = 16;
+    int RayMaxDepth = 4;
 #endif
 
     std::string ImageFileName = "traceratops_render.png";
@@ -123,10 +129,11 @@ int main()
     auto Scene = create_and_setup_scene();
     Scene->prepare_for_rendering();
 
-    float ApertureSize = 0.05f;
+    float ApertureSize = 0.0f;//0.05f;
     //camera Camera{vec3{0, 1, -2}, vec3{0.75f, 0, 1}, vec3{0, 1, 0}, Image, 90, ApertureSize};
     camera Camera{vec3{0, 1, 2.2f}, vec3{0, 1, 0}, vec3{0, 1, 0}, Image, 75, ApertureSize};
 
+    //debug_renderer Renderer{};
     //basic_renderer Renderer{RaysPerPixel, RayMaxDepth};
     parallel_renderer Renderer{RaysPerPixel, RayMaxDepth};
     Renderer.render_scene(*Scene, Camera, Image);

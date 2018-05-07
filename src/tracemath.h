@@ -23,6 +23,20 @@ float square(float x)
     return x * x;
 }
 
+static inline
+float lerp(float a, float b, float x)
+{
+    return (1.0f - x) * a + x * b;
+}
+
+static inline
+float clamp(float x, float a, float b)
+{
+    return std::max(a, std::min(x, b));
+}
+
+
+
 ///////////////////////////////////////////////////////////////
 // vec2
 
@@ -362,6 +376,11 @@ static bool refract(const vec3& I, const vec3& N, float NiOverNt, vec3& Refracte
     }
 }
 
+static float schlick_fresnell_base(float Cosine, float R0)
+{
+    return R0 + (1.0f - R0) * powf(1.0f - Cosine, 5.0f);
+}
+
 static float schlick_fresnell(float Cosine, float IndexOfRefraction)
 {
     // From: https://en.wikipedia.org/wiki/Schlick%27s_approximation
@@ -372,7 +391,7 @@ static float schlick_fresnell(float Cosine, float IndexOfRefraction)
     float R0 = (Air - IndexOfRefraction) / (Air + IndexOfRefraction);
     R0 = R0 * R0;
 
-    return R0 + (1.0f - R0) * powf(1.0f - Cosine, 5.0f);
+    return schlick_fresnell_base(Cosine, R0);
 }
 
 static vec3 perpendicular(const vec3& Vector)

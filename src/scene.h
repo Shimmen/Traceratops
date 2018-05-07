@@ -24,7 +24,7 @@ public:
     const material& get_material(int Material) const;
 
     void add_hitable(hitable *Hitable);
-    void register_triangle_mesh(const std::string& Directory, const std::string& ObjFileName, const vec3& Translation, float Scale = 1.0f);
+    void register_triangle_mesh(const std::string& Directory, const std::string& ObjFileName, const vec3& Translation, float Scale = 1.0f, float yRotation = 0.0f);
 
     void prepare_for_rendering();
     bool is_prepared_for_rendering() const;

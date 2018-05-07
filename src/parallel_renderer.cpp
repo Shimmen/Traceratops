@@ -73,7 +73,7 @@ void parallel_renderer::render_scene(const scene &Scene, const camera &Camera, i
     unsigned int BaseSeed = static_cast<unsigned int>(Now.time_since_epoch().count());
 
     // Setup work context
-    int TileSideSize = 64;
+    int TileSideSize = 32;
     int SamplesPerWorkOrder = 1;
     auto WorkContext = new work_context{&Image, &Scene, &Camera, RaysPerPixel, MaxRayDepth, TileSideSize, SamplesPerWorkOrder};
 
@@ -242,7 +242,7 @@ parallel_renderer::trace_ray(ray Ray, const scene& Scene, rng& Rng) const
                 if (Phi < 0.0f) Phi += tracemath::TWO_PI;
 
                 float u = Phi / tracemath::TWO_PI;
-                float v = Theta / tracemath::PI;
+                float v = 1.0f - Theta / tracemath::PI;
 
                 // (nearest might be okay here since we trace multiple rays per pixel)
                 vec3 EnvironmentColor = Scene.EnvironmentMap->sample_texel_nearest(u, v);
