@@ -73,8 +73,8 @@ void parallel_renderer::render_scene(const scene &Scene, const camera &Camera, i
     unsigned int BaseSeed = static_cast<unsigned int>(Now.time_since_epoch().count());
 
     // Setup work context
-    int TileSideSize = 32;
-    int SamplesPerWorkOrder = 1;
+    int TileSideSize = 64;
+    int SamplesPerWorkOrder = 2;
     auto WorkContext = new work_context{&Image, &Scene, &Camera, RaysPerPixel, MaxRayDepth, TileSideSize, SamplesPerWorkOrder};
 
     printf("-------------\n- rendering -\n-------------\n");

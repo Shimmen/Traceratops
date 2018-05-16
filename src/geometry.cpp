@@ -37,6 +37,9 @@ bool sphere::intersect(const ray &Ray, float TMin, float TMax, hit_info& Hit) co
         Hit.Point = Ray.Origin + t * Ray.Direction;
         Hit.Normal = normalize(Hit.Point - C);
 
+        Hit.TextureCoordinate.y = Hit.Normal.y * 0.5f + 0.5f;
+        Hit.TextureCoordinate.x = atan2(Hit.Normal.z, Hit.Normal.x) / tracemath::TWO_PI;
+
         Hit.Hitable = this;
         return true;
     }

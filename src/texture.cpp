@@ -82,6 +82,16 @@ vec3 texture::sample_texel_linear(float u, float v) const
     return Result;
 }
 
+vec3 texture::sample_texel_nearest(const vec2& uv) const
+{
+    return sample_texel_nearest(uv.x, uv.y);
+}
+
+vec3 texture::sample_texel_linear(const vec2& uv) const
+{
+    return sample_texel_linear(uv.x, uv.y);
+}
+
 vec3
 texture::texel_fetch(int x, int y) const
 {

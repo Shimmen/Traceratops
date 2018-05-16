@@ -73,16 +73,25 @@ struct microfacet: public material
     const texture *RoughnessTexture;
     const texture *MetalnessTexture;
 
+    const vec3 DiffuseConst;
+    const float RoughnessConst;
+    const float MetalnessConst;
+
     microfacet(const texture *Diffuse, const texture *Roughness, const texture *Metalness)
-        : DiffuseTexture(Diffuse), RoughnessTexture(Roughness), MetalnessTexture(Metalness) {}
+        : DiffuseTexture(Diffuse), RoughnessTexture(Roughness), MetalnessTexture(Metalness)
+        , DiffuseConst(1, 1, 1), RoughnessConst(1.0f), MetalnessConst(0.0f) {}
 
     vec3 brdf(const vec3& Wi, const vec3& Wo, const hit_info& Hit, rng& Rng) const override;
     bool calculate_scattered(const ray& IncomingRay, hit_info& Hit, rng& Rng, ray& ScatteredRay, float& Pdf) const override;
 
 private:
 
-    float shadowing_function(const vec3& Wi, const vec3& Wo, const hit_info& Hit) const;
-    float cook_torrance_microfacet_distibution(const vec3 &Wi, const vec3 &Wo, const hit_info &Hit) const;
+    float chi_ggx(float v) const;
+
+    float ggx_geometry_function(const vec3 &Wi, const vec3 &Wo, const vec3& N, float Roughness) const;
+    float ggx_partial_geometry_function(const vec3 &V, const vec3 &Wh, const vec3& N, float Roughness) const;
+
+    float ggx_microfacet_distibution(const vec3 &Wi, const vec3 &Wo, const vec3& N, float Roughness) const;
 
 };
 

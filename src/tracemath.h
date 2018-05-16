@@ -116,21 +116,39 @@ vec3 operator+(const vec3& a, const vec3& b)
 }
 
 static inline
+vec3 operator+(const vec3& a, float x)
+{
+    return vec3{a.x + x, a.y + x, a.z + x};
+}
+
+static inline
+vec3 operator+(float x, const vec3& a)
+{
+    return vec3(x) + a;
+}
+
+static inline
 vec3 operator-(const vec3& a, const vec3& b)
 {
     return vec3{a.x - b.x, a.y - b.y, a.z - b.z};
 }
 
 static inline
-vec3 operator*(const vec3& a, const vec3& b)
+vec3 operator-(const vec3& a, float x)
 {
-    return vec3{a.x * b.x, a.y * b.y, a.z * b.z};
+    return vec3{a.x - x, a.y - x, a.z - x};
 }
 
 static inline
-vec3 operator/(const vec3& a, const vec3& b)
+vec3 operator-(float x, const vec3& a)
 {
-    return vec3{a.x / b.x, a.y / b.y, a.z / b.z};
+    return vec3(x) - a;
+}
+
+static inline
+vec3 operator*(const vec3& a, const vec3& b)
+{
+    return vec3{a.x * b.x, a.y * b.y, a.z * b.z};
 }
 
 static inline
@@ -143,6 +161,12 @@ static inline
 vec3 operator*(float s, const vec3& a)
 {
     return a * s;
+}
+
+static inline
+vec3 operator/(const vec3& a, const vec3& b)
+{
+    return vec3{a.x / b.x, a.y / b.y, a.z / b.z};
 }
 
 static inline
@@ -335,6 +359,28 @@ vec3 max_and_zeroes(const vec3& a)
 }
 
 ///////////////////////////////////////////////////////////////
+// mat3
+
+struct mat3
+{
+    vec3 c1;
+    vec3 c2;
+    vec3 c3;
+
+    mat3(const vec3& c1, const vec3& c2, const vec3& c3) : c1(c1), c2(c2), c3(c3) {}
+};
+
+static inline
+vec3 operator*(const mat3& m, const vec3& v)
+{
+    return vec3(
+        m.c1.x * v.x + m.c2.x * v.y + m.c3.x * v.z,
+        m.c1.y * v.x + m.c2.y * v.y + m.c3.y * v.z,
+        m.c1.z * v.x + m.c2.z * v.y + m.c3.z * v.z
+    );
+}
+
+///////////////////////////////////////////////////////////////
 // ray
 
 struct ray
@@ -381,6 +427,11 @@ static float schlick_fresnell_base(float Cosine, float R0)
     return R0 + (1.0f - R0) * powf(1.0f - Cosine, 5.0f);
 }
 
+static vec3 schlick_fresnell_base(float Cosine, const vec3& R0)
+{
+    return R0 + (1.0f - R0) * powf(1.0f - Cosine, 5.0f);
+}
+
 static float schlick_fresnell(float Cosine, float IndexOfRefraction)
 {
     // From: https://en.wikipedia.org/wiki/Schlick%27s_approximation
@@ -404,6 +455,42 @@ static vec3 perpendicular(const vec3& Vector)
     {
         return vec3{-Vector.z, 0.0f, Vector.x};
     }
+}
+
+static vec3 spherical_to_vector(float Theta, float Phi)
+{
+    return vec3(
+        sin(Theta) * cos(Phi),
+        cos(Theta),
+        sin(Theta) * sin(Phi)
+    );
+
+    /*
+    return vec3(
+        sin(Theta) * cos(Phi),
+        sin(Theta) * sin(Phi),
+        cos(Theta)
+    );
+    */
+}
+
+static void reorthogonalize(const vec3& a, vec3& b)
+{
+    // Perform Gram-Schmidt's re-ortogonalization process to make b orthagonal to a
+    b = normalize(b - dot(b, a) * a);
+}
+
+static mat3 generate_isotropic_tbn(const vec3& N)
+{
+    vec3 T = perpendicular(N);
+    reorthogonalize(N, T);
+
+    vec3 B = cross(T, N);
+    reorthogonalize(N, B);
+
+    return {T, B, N};
+    //return {T, N, B}; // maybe??
+    //return {B, N, T}; // maybe??!
 }
 
 ///////////////////////////////////////////////////////////////

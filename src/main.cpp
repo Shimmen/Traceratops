@@ -16,10 +16,18 @@ std::unique_ptr<scene> create_and_setup_scene()
     Scene->EnvironmentMap = std::unique_ptr<texture>(new texture{"assets/environment.hdr"});
     Scene->EnvironmentMultiplier = 0.3f;
 
-    Scene->register_triangle_mesh("assets/cornell_box/", "CornellBox-Empty.obj", vec3{0.0f, 0.0f, 1.0f}, 1.4f);
+    Scene->register_triangle_mesh("assets/cornell_box/", "CornellBox-Empty.obj", vec3{0.0f, 0.0f, 1.0f}, 1.7f);
     //Scene->register_triangle_mesh("assets/quad/", "quad.obj", vec3{0.0f, 1.0f, -0.99f}, 2.0f);
     //Scene->register_triangle_mesh("assets/teapot/", "teapot.obj", vec3{0.20f, 0.56f, 0.21f}, 0.01f);
-    Scene->register_triangle_mesh("assets/cerberus/", "cerberus.obj", vec3{0.9f, 1.3f, 0.2f}, 1.7f, -90.0f);
+
+    //Scene->register_triangle_mesh("assets/cerberus/", "cerberus.obj", vec3{0.9f, 1.3f, 0.2f}, 1.7f, -90.0f);
+    //Scene->register_triangle_mesh("assets/sphere/", "sphere.obj", vec3{0, 1.2f, 0}, 1.0f, 180.0f);
+
+    auto DiffuseTexture = new texture{"assets/cerberus/textures/Cerberus_A.jpg"};
+    auto RoughnessTexture = new texture{"assets/cerberus/textures/Cerberus_R.jpg"};
+    auto MetalnessTexture = new texture{"assets/cerberus/textures/Cerberus_M.jpg"};
+    int BPRMaterial = Scene->register_material(new microfacet{DiffuseTexture, RoughnessTexture, MetalnessTexture});
+
 
     int DiffuseRedMaterial  = Scene->register_material(new lambertian{vec3{1.0, 0.1, 0.1}});
     int GreenMetalMaterial  = Scene->register_material(new metal{vec3{0.4, 1.0, 0.4}, 0.2f});
@@ -27,6 +35,11 @@ std::unique_ptr<scene> create_and_setup_scene()
     int MirrorMaterial      = Scene->register_material(new metal{vec3{1, 1, 1}, 0.0});
     int ClearGlassMaterial  = Scene->register_material(new dielectric{1.5f});
     int LightMaterial       = Scene->register_material(new lambertian{vec3{1.0, 0.7, 0.7}, 10.0});
+
+    Scene->add_hitable(new sphere{
+            vec3{0, 1.2f, 0},
+            1.0, BPRMaterial
+    });
 /*
     // Diffuse red ball
     Scene->add_hitable(new sphere{
@@ -99,7 +112,7 @@ std::unique_ptr<scene> create_and_setup_scene()
 
 int main()
 {
-#define QUALITY 3
+#define QUALITY 1
 
 #if QUALITY == 0
     image Image{1080, 1080};
