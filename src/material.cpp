@@ -155,12 +155,9 @@ vec3 microfacet::brdf(const vec3& Wi, const vec3& Wo, const hit_info& Hit, rng& 
     float u = Hit.TextureCoordinate.x;
     float v = Hit.TextureCoordinate.y;
 
-    float Metalness = /*MetalnessConst;*/MetalnessTexture->sample_texel_linear(u, v).x;
-    float Roughness = /*RoughnessConst;*/RoughnessTexture->sample_texel_linear(u, v).x;
-    vec3 Albedo = /*DiffuseConst;*/DiffuseTexture->sample_texel_linear(u, v);
-
-    // Scale roughness
-    //Roughness *= 7.0f;
+    float Metalness = MetalnessConst;//MetalnessTexture->sample_texel_linear(u, v).x;
+    float Roughness = RoughnessConst;//RoughnessTexture->sample_texel_linear(u, v).x;
+    vec3 Albedo = DiffuseConst;//DiffuseTexture->sample_texel_linear(u, v);
 
     // Use PVP plastic as default dielectric. They don't differ too much anyway.
     // IoR source: https://refractiveindex.info/?shelf=3d&book=plastics&page=pvp
@@ -168,7 +165,6 @@ vec3 microfacet::brdf(const vec3& Wi, const vec3& Wo, const hit_info& Hit, rng& 
     const vec3 DefaultDielectricIoR = vec3(1.5268f, 1.5299, 1.5413f);
     vec3  R0 = (1.0f - DefaultDielectricIoR) / (1.0f + DefaultDielectricIoR);
     R0 = R0 * R0;
-    //R0 = vec3(0.0);
 
     // Use normal base fresnel for dielectrics, use albedo as base fresnel for metals
     vec3 F0 = lerp(vec3(R0), Albedo, Metalness);

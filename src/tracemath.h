@@ -110,139 +110,139 @@ struct vec3
 };
 
 static inline
-vec3 operator+(const vec3& a, const vec3& b)
+vec3 operator+(const vec3& l, const vec3& r)
 {
-    return vec3{a.x + b.x, a.y + b.y, a.z + b.z};
+    return vec3{l.x + r.x, l.y + r.y, l.z + r.z};
 }
 
 static inline
-vec3 operator+(const vec3& a, float x)
+vec3 operator+(const vec3& l, float r)
 {
-    return vec3{a.x + x, a.y + x, a.z + x};
+    return vec3{l.x + r, l.y + r, l.z + r};
 }
 
 static inline
-vec3 operator+(float x, const vec3& a)
+vec3 operator+(float l, const vec3& r)
 {
-    return vec3(x) + a;
+    return vec3{l + r.x, l + r.y, l + r.z};
 }
 
 static inline
-vec3 operator-(const vec3& a, const vec3& b)
+vec3 operator-(const vec3& l, const vec3& r)
 {
-    return vec3{a.x - b.x, a.y - b.y, a.z - b.z};
+    return vec3{l.x - r.x, l.y - r.y, l.z - r.z};
 }
 
 static inline
-vec3 operator-(const vec3& a, float x)
+vec3 operator-(const vec3& l, float r)
 {
-    return vec3{a.x - x, a.y - x, a.z - x};
+    return vec3{l.x - r, l.y - r, l.z - r};
 }
 
 static inline
-vec3 operator-(float x, const vec3& a)
+vec3 operator-(float l, const vec3& r)
 {
-    return vec3(x) - a;
+    return vec3{l - r.x, l - r.y, l - r.z};
 }
 
 static inline
-vec3 operator*(const vec3& a, const vec3& b)
+vec3 operator*(const vec3& l, const vec3& r)
 {
-    return vec3{a.x * b.x, a.y * b.y, a.z * b.z};
+    return vec3{l.x * r.x, l.y * r.y, l.z * r.z};
 }
 
 static inline
-vec3 operator*(const vec3& a, float s)
+vec3 operator*(const vec3& l, float r)
 {
-    return vec3{a.x * s, a.y * s, a.z * s};
+    return vec3{l.x * r, l.y * r, l.z * r};
 }
 
 static inline
-vec3 operator*(float s, const vec3& a)
+vec3 operator*(float l, const vec3& r)
 {
-    return a * s;
+    return vec3{l * r.x, l * r.y, l * r.z};
 }
 
 static inline
-vec3 operator/(const vec3& a, const vec3& b)
+vec3 operator/(const vec3& l, const vec3& r)
 {
-    return vec3{a.x / b.x, a.y / b.y, a.z / b.z};
+    return vec3{l.x / r.x, l.y / r.y, l.z / r.z};
 }
 
 static inline
-vec3 operator/(const vec3& a, float s)
+vec3 operator/(const vec3& l, float r)
 {
-    return vec3{a.x / s, a.y / s, a.z / s};
+    return vec3{l.x / r, l.y / r, l.z / r};
 }
 
 static inline
-vec3& operator+=(vec3& a, const vec3& b)
+vec3& operator+=(vec3& l, const vec3& r)
 {
-    a.x += b.x;
-    a.y += b.y;
-    a.z += b.z;
-    return a;
+    l.x += r.x;
+    l.y += r.y;
+    l.z += r.z;
+    return l;
 }
 
 static inline
-vec3& operator-=(vec3& a, const vec3& b)
+vec3& operator-=(vec3& l, const vec3& r)
 {
-    a.x -= b.x;
-    a.y -= b.y;
-    a.z -= b.z;
-    return a;
+    l.x -= r.x;
+    l.y -= r.y;
+    l.z -= r.z;
+    return l;
 }
 
 static inline
-vec3& operator*=(vec3& a, const vec3& b)
+vec3& operator*=(vec3& l, const vec3& r)
 {
-    a.x *= b.x;
-    a.y *= b.y;
-    a.z *= b.z;
-    return a;
+    l.x *= r.x;
+    l.y *= r.y;
+    l.z *= r.z;
+    return l;
 }
 
 static inline
-vec3& operator/=(vec3& a, const vec3& b)
+vec3& operator/=(vec3& l, const vec3& r)
 {
-    a.x /= b.x;
-    a.y /= b.y;
-    a.z /= b.z;
-    return a;
+    l.x /= r.x;
+    l.y /= r.y;
+    l.z /= r.z;
+    return l;
 }
 
 static inline
-vec3& operator*=(vec3& a, float s)
+vec3& operator*=(vec3& l, float r)
 {
-    a.x *= s;
-    a.y *= s;
-    a.z *= s;
-    return a;
+    l.x *= r;
+    l.y *= r;
+    l.z *= r;
+    return l;
 }
 
 static inline
-vec3& operator/=(vec3& a, float s)
+vec3& operator/=(vec3& l, float r)
 {
-    a.x /= s;
-    a.y /= s;
-    a.z /= s;
-    return a;
+    l.x /= r;
+    l.y /= r;
+    l.z /= r;
+    return l;
 }
 
 static inline
-vec3 cross(const vec3& a, const vec3& b)
+vec3 cross(const vec3& l, const vec3& r)
 {
     return vec3{
-        a.y * b.z - a.z * b.y,
-        a.z * b.x - a.x * b.z,
-        a.x * b.y - a.y * b.x
+        l.y * r.z - l.z * r.y,
+        l.z * r.x - l.x * r.z,
+        l.x * r.y - l.y * r.x
     };
 }
 
 static inline
-float dot(const vec3& a, const vec3& b)
+float dot(const vec3& l, const vec3& r)
 {
-    return (a.x * b.x) + (a.y * b.y) + (a.z * b.z);
+    return (l.x * r.x) + (l.y * r.y) + (l.z * r.z);
 }
 
 static inline
@@ -285,23 +285,24 @@ vec3 make_direction(float x, float y, float z)
 static inline
 vec3 lerp(const vec3 &a, const vec3 &b, float x)
 {
-    return a + (b - a) * x;
+    return (1.0f - x) * a + x * b;
+    //return a + (b - a) * x;
 }
 
 static inline
-void min(vec3 *a, const vec3& b)
+void min(vec3 *l, const vec3& r)
 {
-    a->x = fminf(a->x, b.x);
-    a->y = fminf(a->y, b.y);
-    a->z = fminf(a->z, b.z);
+    l->x = fminf(l->x, r.x);
+    l->y = fminf(l->y, r.y);
+    l->z = fminf(l->z, r.z);
 }
 
 static inline
-void max(vec3 *a, const vec3& b)
+void max(vec3 *l, const vec3& r)
 {
-    a->x = fmaxf(a->x, b.x);
-    a->y = fmaxf(a->y, b.y);
-    a->z = fmaxf(a->z, b.z);
+    l->x = fmaxf(l->x, r.x);
+    l->y = fmaxf(l->y, r.y);
+    l->z = fmaxf(l->z, r.z);
 }
 
 static inline

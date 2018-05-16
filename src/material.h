@@ -79,7 +79,7 @@ struct microfacet: public material
 
     microfacet(const texture *Diffuse, const texture *Roughness, const texture *Metalness)
         : DiffuseTexture(Diffuse), RoughnessTexture(Roughness), MetalnessTexture(Metalness)
-        , DiffuseConst(1, 1, 1), RoughnessConst(1.0f), MetalnessConst(0.0f) {}
+        , DiffuseConst(1.0f, 0.765557, 0.336057f), RoughnessConst(0.05f), MetalnessConst(1.0f) {}
 
     vec3 brdf(const vec3& Wi, const vec3& Wo, const hit_info& Hit, rng& Rng) const override;
     bool calculate_scattered(const ray& IncomingRay, hit_info& Hit, rng& Rng, ray& ScatteredRay, float& Pdf) const override;
