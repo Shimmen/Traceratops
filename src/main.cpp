@@ -29,17 +29,18 @@ std::unique_ptr<scene> create_and_setup_scene()
     int BPRMaterial = Scene->register_material(new microfacet{DiffuseTexture, RoughnessTexture, MetalnessTexture});
 
 
-    int DiffuseRedMaterial  = Scene->register_material(new lambertian{vec3{1.0, 0.1, 0.1}});
-    int GreenMetalMaterial  = Scene->register_material(new metal{vec3{0.4, 1.0, 0.4}, 0.2f});
-    int DiffuseGrayMaterial = Scene->register_material(new lambertian{vec3{0.6, 0.6, 0.6}});
-    int MirrorMaterial      = Scene->register_material(new metal{vec3{1, 1, 1}, 0.0});
+    int DiffuseRedMaterial  = Scene->register_material(new lambertian{vec3{1.0f, 0.1f, 0.1f}});
+    int GreenMetalMaterial  = Scene->register_material(new metal{vec3{0.4f, 1.0f, 0.4f}, 0.2f});
+    int DiffuseGrayMaterial = Scene->register_material(new lambertian{vec3{0.6f, 0.6f, 0.6f}});
+    int MirrorMaterial      = Scene->register_material(new metal{vec3{1.0f, 1.0f, 1.0f}, 0.0f});
     int ClearGlassMaterial  = Scene->register_material(new dielectric{1.5f});
-    int LightMaterial       = Scene->register_material(new lambertian{vec3{1.0, 0.7, 0.7}, 10.0});
+    int LightMaterial       = Scene->register_material(new lambertian{vec3{1.0f, 0.7f, 0.7f}, 10.0f});
 
     Scene->add_hitable(new sphere{
             vec3{0, 1.2f, 0},
             1.0, BPRMaterial
     });
+
 /*
     // Diffuse red ball
     Scene->add_hitable(new sphere{

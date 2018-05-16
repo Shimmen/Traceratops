@@ -5,6 +5,7 @@
 
 #include <thread>
 #include <atomic>
+#include <mutex>
 
 struct parallel_renderer: public renderer
 {

@@ -1,6 +1,8 @@
 #ifndef TRACERATOPS_AABB_H
 #define TRACERATOPS_AABB_H
 
+#include <algorithm>
+
 #include "tracemath.h"
 
 struct aabb
