@@ -25,6 +25,13 @@ void setup_pbr_demo(scene& Scene)
     });
 }
 
+void setup_texture_test(scene& Scene)
+{
+    Scene.register_triangle_mesh("assets/cornell_box/", "CornellBox-Original.obj", vec3{0.0f, 0.0f, 0.0f});
+    Scene.register_triangle_mesh("assets/quad/", "quad.obj", vec3{0.0f, 1.0f, -0.99f}, 2.0f);
+    Scene.register_triangle_mesh("assets/teapot/", "teapot.obj", vec3{0.20f, 0.56f, 0.21f}, 0.01f);
+}
+
 void setup_moving_sphere_demo(scene& Scene)
 {
     Scene.register_triangle_mesh("assets/cornell_box/", "CornellBox-Empty.obj", vec3{0.0f, 0.0f, -0.75f}, 1.7f);
@@ -45,7 +52,8 @@ std::unique_ptr<scene> create_and_setup_scene()
     Scene->EnvironmentMultiplier = 0.3f;
 
     //setup_pbr_demo(*Scene);
-    setup_moving_sphere_demo(*Scene);
+    //setup_moving_sphere_demo(*Scene);
+    setup_texture_test(*Scene);
 
     return Scene;
 }
@@ -76,14 +84,14 @@ int main()
     int RayMaxDepth = 4;
 #endif
 
-#if 0
+#if 1
     std::string ImageFileName = "traceratops_render.png";
     printf("Traceratops - rendering %dx%d image '%s'\n", Image.Width, Image.Height, ImageFileName.c_str());
 
     auto Scene = create_and_setup_scene();
     Scene->prepare_for_rendering();
 
-    float ApertureSize = 0.15f;
+    float ApertureSize = 0.05f;
     //camera Camera{vec3{0, 1, -2}, vec3{0.75f, 0, 1}, vec3{0, 1, 0}, Image, 90, ApertureSize};
     camera Camera{vec3{0, 1, 2.2f}, vec3{0, 1, 0}, vec3{0, 1, 0}, Image, 75, ApertureSize};
 
