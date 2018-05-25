@@ -13,7 +13,7 @@ public:
 
 private:
 
-    virtual bool get_first_intersection(const scene& Scene, const ray& Ray, float MinT, float MaxT, hit_info *Hit) const = 0;
+    virtual bool get_first_intersection(const scene& Scene, const ray& Ray, float MinT, float MaxT, rng& Rng, hit_info *Hit) const = 0;
     virtual vec3 trace_ray(ray Ray, const scene& Scene, rng& Rng) const = 0;
 
 };

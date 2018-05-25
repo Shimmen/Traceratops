@@ -43,9 +43,9 @@ void debug_renderer::render_scene(const scene &Scene, const camera &Camera, imag
 }
 
 bool
-debug_renderer::get_first_intersection(const scene& Scene, const ray& Ray, float MinT, float MaxT, hit_info *Hit) const
+debug_renderer::get_first_intersection(const scene& Scene, const ray& Ray, float MinT, float MaxT, rng& Rng, hit_info *Hit) const
 {
-    return Scene.BVHRootNode->intersect(Ray, MinT, MaxT, *Hit);
+    return Scene.BVHRootNode->intersect(Ray, MinT, MaxT, *Hit, Rng);
 }
 
 vec3
@@ -54,7 +54,7 @@ debug_renderer::trace_ray(ray Ray, const scene& Scene, rng& Rng) const
     vec3 ResultColor = vec3{0, 0, 0};
 
     hit_info Hit{};
-    if (get_first_intersection(Scene, Ray, 0.001f, INFINITY, &Hit))
+    if (get_first_intersection(Scene, Ray, 0.001f, INFINITY, Rng, &Hit))
     {
         const material& Material = Scene.get_material(Hit.Hitable->Material);
 

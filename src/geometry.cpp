@@ -3,7 +3,7 @@
 
 static const float IntersectionTolerance = 0.0001f;
 
-bool sphere::intersect(const ray &Ray, float TMin, float TMax, hit_info& Hit) const
+bool sphere::intersect(const ray &Ray, float TMin, float TMax, hit_info& Hit, rng& Rng) const
 {
     vec3 RelOrigin = Ray.Origin - C;
 
@@ -55,7 +55,68 @@ bool sphere::get_aabb(aabb& AABB) const
     return true;
 }
 
-bool disc::intersect(const ray &Ray, float TMin, float TMax, hit_info &Hit) const
+bool moving_sphere::intersect(const ray& Ray, float TMin, float TMax, hit_info& Hit, rng& Rng) const
+{
+    float TimeSlice = Rng.random_01();
+    vec3 CurrentC = C + TimeSlice * Velocity;
+
+    vec3 RelOrigin = Ray.Origin - CurrentC;
+
+    // (quadratic formula)
+    float a = dot(Ray.Direction, Ray.Direction);
+    float b = 2.0f * dot(Ray.Direction, RelOrigin);
+    float c = dot(RelOrigin, RelOrigin) - (r * r);
+
+    float Denom = 2.0f * a;
+    float SqrtInner = b * b - 4.0f * a * c;
+
+    if (SqrtInner < 0) return false;
+    if (Denom == 0) return false;
+
+    float RootTerm = sqrt(SqrtInner);
+    if (RootTerm < 0.0001f) return false;
+
+    float tp = (-b + RootTerm) / Denom;
+    float tn = (-b - RootTerm) / Denom;
+
+    // Select closest distance (that is greater than zero)
+    float t = tp;
+    if (tn >= TMin && tn < tp)
+    {
+        t = tn;
+    }
+
+    if (t >= TMin && t <= TMax)
+    {
+        Hit.Distance = t;
+        Hit.Point = Ray.Origin + t * Ray.Direction;
+        Hit.Normal = normalize(Hit.Point - C);
+
+        Hit.TextureCoordinate.y = Hit.Normal.y * 0.5f + 0.5f;
+        Hit.TextureCoordinate.x = atan2(Hit.Normal.z, Hit.Normal.x) / tracemath::TWO_PI;
+
+        Hit.Hitable = this;
+        return true;
+    }
+
+    return false;
+}
+
+bool moving_sphere::get_aabb(aabb& AABB) const
+{
+    aabb Path[2];
+
+    Path[0].Min = C - vec3{r, r, r};
+    Path[0].Max = C + vec3{r, r, r};
+
+    Path[1].Min = C + Velocity - vec3{r, r, r};
+    Path[1].Max = C + Velocity + vec3{r, r, r};
+
+    AABB = aabb_enclosing(Path, 2);
+    return true;
+}
+
+bool disc::intersect(const ray &Ray, float TMin, float TMax, hit_info &Hit, rng& Rng) const
 {
     float Denominator = dot(N, Ray.Direction);
     if (fabsf(Denominator) < IntersectionTolerance) return 0;
@@ -101,7 +162,7 @@ bool disc::get_aabb(aabb &AABB) const
     */
 }
 
-bool triangle::intersect(const ray& Ray, float TMin, float TMax, hit_info& Hit) const
+bool triangle::intersect(const ray& Ray, float TMin, float TMax, hit_info& Hit, rng& Rng) const
 {
     // From GraphicsCodex
 

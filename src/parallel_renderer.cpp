@@ -114,7 +114,7 @@ void parallel_renderer::render_scene(const scene &Scene, const camera &Camera, i
 }
 
 bool
-parallel_renderer::get_first_intersection(const scene& Scene, const ray& Ray, float MinT, float MaxT, hit_info *Hit) const
+parallel_renderer::get_first_intersection(const scene& Scene, const ray& Ray, float MinT, float MaxT, rng& Rng, hit_info *Hit) const
 {
 #if USE_NAIVE_INTERSECTION_TEST
 
@@ -138,7 +138,7 @@ parallel_renderer::get_first_intersection(const scene& Scene, const ray& Ray, fl
 
 #else
 
-    return Scene.BVHRootNode->intersect(Ray, MinT, MaxT, *Hit);
+    return Scene.BVHRootNode->intersect(Ray, MinT, MaxT, *Hit, Rng);
 
 #endif
 }
@@ -152,7 +152,7 @@ parallel_renderer::trace_ray(ray Ray, const scene& Scene, rng& Rng) const
     hit_info Hit{};
     for (int CurrentDepth = 0; CurrentDepth < MaxRayDepth; ++CurrentDepth)
     {
-        if (get_first_intersection(Scene, Ray, 0.001f, INFINITY, &Hit))
+        if (get_first_intersection(Scene, Ray, 0.001f, INFINITY, Rng, &Hit))
         {
             const material& Material = Scene.get_material(Hit.Hitable->Material);
 
@@ -174,7 +174,7 @@ parallel_renderer::trace_ray(ray Ray, const scene& Scene, rng& Rng) const
                 ray LightRay = get_light_ray(Origin, Scene, Rng, &LightSource, &LightDistance);
                 hit_info LightRayHit{};
 
-                bool DidHitAnything = get_first_intersection(Scene, LightRay, 0.0f, LightDistance + 0.001f, &LightRayHit);
+                bool DidHitAnything = get_first_intersection(Scene, LightRay, 0.0f, LightDistance + 0.001f, Rng, &LightRayHit);
 
                 if (!DidHitAnything)
                 {

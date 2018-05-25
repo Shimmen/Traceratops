@@ -18,7 +18,7 @@ public:
 
 private:
 
-    bool get_first_intersection(const scene& Scene, const ray& Ray, float MinT, float MaxT, hit_info *Hit) const override;
+    bool get_first_intersection(const scene& Scene, const ray& Ray, float MinT, float MaxT, rng& Rng, hit_info *Hit) const override;
     vec3 trace_ray(ray Ray, const scene& Scene, rng& Rng) const override;
 
     ray get_light_ray(const vec3& Origin, const scene& Scene, rng& Rng, hitable **LightSource, float *MaxDistance) const;

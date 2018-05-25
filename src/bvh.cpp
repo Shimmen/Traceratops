@@ -67,13 +67,13 @@ bvh_node::~bvh_node()
     }
 }
 
-bool bvh_node::intersect(const ray& Ray, float TMin, float TMax, hit_info& Hit) const
+bool bvh_node::intersect(const ray& Ray, float TMin, float TMax, hit_info& Hit, rng& Rng) const
 {
     if (aabb_ray_intersection(NodeAABB, Ray, TMax))
     {
         hit_info LeftHitInfo{}, RightHitInfo{};
-        bool LeftHit = Left->intersect(Ray, TMin, TMax, LeftHitInfo);
-        bool RightHit = Right->intersect(Ray, TMin, TMax, RightHitInfo);
+        bool LeftHit = Left->intersect(Ray, TMin, TMax, LeftHitInfo, Rng);
+        bool RightHit = Right->intersect(Ray, TMin, TMax, RightHitInfo, Rng);
 
         if (LeftHit && RightHit)
         {

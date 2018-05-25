@@ -14,7 +14,7 @@ public:
 
 private:
 
-    bool get_first_intersection(const scene& Scene, const ray& Ray, float MinT, float MaxT, hit_info *Hit) const override;
+    bool get_first_intersection(const scene& Scene, const ray& Ray, float MinT, float MaxT, rng& Rng, hit_info *Hit) const override;
     vec3 trace_ray(ray Ray, const scene& Scene, rng& Rng) const override;
 
     vec3 tone_map_hdr_to_ldr(const vec3& Hdr) const;

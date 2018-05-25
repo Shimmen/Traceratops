@@ -8,7 +8,7 @@ struct bvh_node: public hitable
     bvh_node(hitable **Hitables, size_t Count);
     ~bvh_node();
 
-    virtual bool intersect(const ray& Ray, float TMin, float TMax, hit_info& Hit) const;
+    virtual bool intersect(const ray& Ray, float TMin, float TMax, hit_info& Hit, rng& Rng) const;
     virtual bool get_aabb(aabb& AABB) const;
 
     aabb NodeAABB;

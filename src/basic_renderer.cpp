@@ -66,7 +66,7 @@ void basic_renderer::render_scene(const scene &Scene, const camera &Camera, imag
 }
 
 bool
-basic_renderer::get_first_intersection(const scene& Scene, const ray& Ray, float MinT, float MaxT, hit_info *Hit) const
+basic_renderer::get_first_intersection(const scene& Scene, const ray& Ray, float MinT, float MaxT, rng& Rng, hit_info *Hit) const
 {
 #if USE_NAIVE_INTERSECTION_TEST
 
@@ -90,7 +90,7 @@ basic_renderer::get_first_intersection(const scene& Scene, const ray& Ray, float
 
 #else
 
-    return Scene.BVHRootNode->intersect(Ray, MinT, MaxT, *Hit);
+    return Scene.BVHRootNode->intersect(Ray, MinT, MaxT, *Hit, Rng);
 
 #endif
 }
@@ -104,7 +104,7 @@ basic_renderer::trace_ray(ray Ray, const scene& Scene, rng& Rng) const
     hit_info Hit{};
     for (int CurrentDepth = 0; CurrentDepth < MaxRayDepth; ++CurrentDepth)
     {
-        if (get_first_intersection(Scene, Ray, 0.001f, INFINITY, &Hit))
+        if (get_first_intersection(Scene, Ray, 0.001f, INFINITY, Rng, &Hit))
         {
             const material& Material = Scene.get_material(Hit.Hitable->Material);
 
@@ -126,9 +126,9 @@ basic_renderer::trace_ray(ray Ray, const scene& Scene, rng& Rng) const
                 ray LightRay = get_light_ray(Origin, Scene, Rng, &LightSource, &LightDistance);
                 hit_info LightRayHit{};
 
-                if (!intersects_shadow_cache(LightRay, LightDistance, CurrentDepth))
+                if (!intersects_shadow_cache(LightRay, LightDistance, CurrentDepth, Rng))
                 {
-                    bool DidHitAnything = get_first_intersection(Scene, LightRay, 0.0f, LightDistance + 0.001f, &LightRayHit);
+                    bool DidHitAnything = get_first_intersection(Scene, LightRay, 0.0f, LightDistance + 0.001f, Rng, &LightRayHit);
 
                     if (!DidHitAnything)
                     {
@@ -261,7 +261,7 @@ basic_renderer::get_light_ray(const vec3& Origin, const scene& Scene, rng& Rng, 
 }
 
 bool
-basic_renderer::intersects_shadow_cache(const ray& Ray, float DistanceToLight, int CurrentRayDepth) const
+basic_renderer::intersects_shadow_cache(const ray& Ray, float DistanceToLight, int CurrentRayDepth, rng& Rng) const
 {
     CacheTries += 1;
 
@@ -271,7 +271,7 @@ basic_renderer::intersects_shadow_cache(const ray& Ray, float DistanceToLight, i
     }
 
     hit_info HitInfo{};
-    bool DidHit = ShadowCache[CurrentRayDepth]->intersect(Ray, 0.0f, DistanceToLight, HitInfo);
+    bool DidHit = ShadowCache[CurrentRayDepth]->intersect(Ray, 0.0f, DistanceToLight, HitInfo, Rng);
 
     CacheHits += (DidHit) ? 1 : 0;
 

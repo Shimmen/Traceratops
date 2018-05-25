@@ -52,6 +52,12 @@ scene::add_hitable(hitable *Hitable)
     {
         EmittingHitables.push_back(Hitable);
     }
+
+    auto AnimatingHitable = dynamic_cast<moving_sphere *>(Hitable);
+    if (AnimatingHitable != nullptr)
+    {
+        AnimatingHitables.push_back(AnimatingHitable);
+    }
 }
 
 void
@@ -205,6 +211,15 @@ bool
 scene::is_prepared_for_rendering() const
 {
     return BVHRootNode != nullptr;
+}
+
+void
+scene::new_frame()
+{
+    for (auto& AnimatingHitable : AnimatingHitables)
+    {
+        AnimatingHitable->C += AnimatingHitable->Velocity;
+    }
 }
 
 void
