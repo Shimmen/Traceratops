@@ -1,9 +1,34 @@
 Traceratops
 ===========
 
-![](assets/generated/header_image.png)
+A very basic CPU path tracer. It was mostly developed for the purpose of learning how it works, so in terms of performance & nice-to-have features not much has been done.
 
-A path tracer, of course! More to come.
+![](images/textures.png)
+
+Most of this project was written during an 8 week course, and not much was done after the course ended, so some features (most notably microfacet BRDF importance sampling) were never finished. With that said, here is a list of features:
+
+## Technical features
+
+- .obj model loading & rendering (including textures)
+- Custom bounding volume hierarchy (BVH)
+- A tile-job parallel renderer which utilizes all available CPU cores
+- Progressive rendering
+
+## Features with accompanying images
+
+_Soft shadows, depth of field, global illumination through brute force path tracing_
+![](images/basic-example.png)
+
+_Transparency, mirror reflections, depth of field, environment mapping_
+![](images/transparency.png)
+
+_Motion blur & animations (by exporting an image sequence)_
+![](images/animation.gif)
+![](images/animation-frames.png)
+
+_A microfacet BRDF (top: metal, bottom: dielectric), however I never got around to implement importance sampling so it's very noisy at low roughness_
+![](images/microfacet-brdf.png)
+
 
 ### License
 
