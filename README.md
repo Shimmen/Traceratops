@@ -3,7 +3,7 @@ Traceratops
 
 A very basic CPU path tracer. It was mostly developed for the purpose of learning how it works, so in terms of performance & nice-to-have features not much has been done.
 
-![](images/textures.png)
+<img src="images/textures.png" width="100%">
 
 Most of this project was written during an 8 week course, and not much was done after the course ended, so some features (most notably microfacet BRDF importance sampling) were never finished. With that said, here is a list of features:
 
@@ -23,7 +23,7 @@ _Transparency, mirror reflections, depth of field, environment mapping_
 ![](images/transparency.png)
 
 _Motion blur & animations (by exporting an image sequence)_
-![](images/animation.gif)
+<img src="images/animation.gif" width="100%">
 ![](images/animation-frames.png)
 
 _A microfacet BRDF (top: metal, bottom: dielectric), however I never got around to implement importance sampling so it's very noisy at low roughness_
